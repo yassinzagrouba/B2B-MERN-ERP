@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/User');
+const { verifyToken } = require('../middlewares/authMiddleware');
 require('dotenv').config();
 
 const router = express.Router();
@@ -182,6 +183,31 @@ router.post('/refresh', async (req, res) => {
     res.status(500).json({ 
       success: false,
       message: 'Erreur serveur lors du rafraîchissement' 
+    });
+  }
+});
+
+// @route   GET /api/auth/profile
+// @desc    Get current user profile
+router.get('/profile', verifyToken, async (req, res) => {
+  try {
+    // req.user is set by the verifyToken middleware
+    const user = req.user;
+    
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Erreur profile :', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Erreur lors de la récupération du profil' 
     });
   }
 });

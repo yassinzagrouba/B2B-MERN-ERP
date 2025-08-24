@@ -51,6 +51,13 @@ clientSchema.virtual('products', {
   foreignField: 'clientid'
 });
 
+// Virtual pour récupérer les commandes de ce client
+clientSchema.virtual('orders', {
+  ref: 'Order',
+  localField: '_id',
+  foreignField: 'clientid'
+});
+
 // Index pour optimiser les recherches
 clientSchema.index({ name: 1 });
 clientSchema.index({ email: 1 });

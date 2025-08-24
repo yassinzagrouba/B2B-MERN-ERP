@@ -33,6 +33,13 @@ const productSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
+// Virtual pour récupérer les commandes de ce produit
+productSchema.virtual('orders', {
+  ref: 'Order',
+  localField: '_id',
+  foreignField: 'productid'
+});
+
 // Index pour optimiser les recherches
 productSchema.index({ name: 1 });
 productSchema.index({ clientid: 1 });

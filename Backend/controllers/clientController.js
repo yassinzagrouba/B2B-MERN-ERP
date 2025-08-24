@@ -78,6 +78,9 @@ const getClientById = async (req, res) => {
 // Créer un nouveau client
 const createClient = async (req, res) => {
   try {
+    console.log('🚀 Backend received client data:', JSON.stringify(req.body, null, 2));
+    console.log('🔐 User making request:', req.user?.email, 'Role:', req.user?.role);
+    
     const { 
       name, 
       adresse, 
