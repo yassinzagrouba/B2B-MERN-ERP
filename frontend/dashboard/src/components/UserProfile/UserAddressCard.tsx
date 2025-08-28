@@ -25,8 +25,8 @@ export default function UserAddressCard() {
                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                   Country
                 </p>
-                <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  United States.
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 italic">
+                  Not specified
                 </p>
               </div>
 
@@ -34,8 +34,8 @@ export default function UserAddressCard() {
                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                   City/State
                 </p>
-                <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  Phoenix, Arizona, United States.
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 italic">
+                  Not specified
                 </p>
               </div>
 
@@ -43,8 +43,8 @@ export default function UserAddressCard() {
                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                   Postal Code
                 </p>
-                <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  ERT 2489
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 italic">
+                  Not specified
                 </p>
               </div>
 
