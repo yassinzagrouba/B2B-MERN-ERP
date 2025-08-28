@@ -1,8 +1,72 @@
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 import ChartTab from "../common/ChartTab";
+import { useState, useEffect } from "react";
+import { companiesAPI, clientsAPI } from "../../services/api";
 
 export default function StatisticsChart() {
+  const [chartSeries, setChartSeries] = useState([
+    {
+      name: "Companies",
+      data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+    {
+      name: "Clients",
+      data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+  ]);
+
+  useEffect(() => {
+    const fetchStatisticsData = async () => {
+      try {
+        const [companiesResponse, clientsResponse] = await Promise.all([
+          companiesAPI.getAll(),
+          clientsAPI.getAll(),
+        ]);
+
+        const companies = companiesResponse.data?.data || companiesResponse.data || [];
+        const clients = clientsResponse.data?.data || clientsResponse.data || [];
+
+        if (Array.isArray(companies) && Array.isArray(clients)) {
+          // Initialize monthly counts
+          const monthlyCompanies = new Array(12).fill(0);
+          const monthlyClients = new Array(12).fill(0);
+          
+          // Count companies by month
+          companies.forEach(company => {
+            if (company.createdAt) {
+              const month = new Date(company.createdAt).getMonth();
+              monthlyCompanies[month]++;
+            }
+          });
+
+          // Count clients by month
+          clients.forEach(client => {
+            if (client.createdAt) {
+              const month = new Date(client.createdAt).getMonth();
+              monthlyClients[month]++;
+            }
+          });
+
+          setChartSeries([
+            {
+              name: "Companies",
+              data: monthlyCompanies,
+            },
+            {
+              name: "Clients",
+              data: monthlyClients,
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error('Error fetching statistics data:', error);
+        // Keep default empty data on error
+      }
+    };
+
+    fetchStatisticsData();
+  }, []);
   const options: ApexOptions = {
     legend: {
       show: false, // Hide legend
@@ -101,16 +165,6 @@ export default function StatisticsChart() {
     },
   };
 
-  const series = [
-    {
-      name: "Sales",
-      data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235],
-    },
-    {
-      name: "Revenue",
-      data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
-    },
-  ];
   return (
     <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
       <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
@@ -129,7 +183,7 @@ export default function StatisticsChart() {
 
       <div className="max-w-full overflow-x-auto custom-scrollbar">
         <div className="min-w-[1000px] xl:min-w-full">
-          <Chart options={options} series={series} type="area" height={310} />
+          <Chart options={options} series={chartSeries} type="area" height={310} />
         </div>
       </div>
     </div>

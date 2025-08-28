@@ -1,12 +1,33 @@
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
+import { dashboardAPI } from "../../services/api";
 
 export default function MonthlyTarget() {
-  const series = [75.55];
+  const [series, setSeries] = useState([0]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const stats = await dashboardAPI.getStats();
+        
+        // Calculate completion percentage: orders vs products
+        const completionPercentage = stats.totalProducts > 0 
+          ? Math.round((stats.totalOrders / stats.totalProducts) * 100)
+          : 0;
+          
+        setSeries([Math.min(completionPercentage, 100)]); // Cap at 100%
+      } catch (error) {
+        console.error('Error fetching monthly target stats:', error);
+        setSeries([0]);
+      }
+    };
+
+    fetchStats();
+  }, []);
   const options: ApexOptions = {
     colors: ["#465FFF"],
     chart: {

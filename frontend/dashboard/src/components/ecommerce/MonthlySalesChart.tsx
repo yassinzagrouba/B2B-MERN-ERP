@@ -3,9 +3,46 @@ import { ApexOptions } from "apexcharts";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { ordersAPI } from "../../services/api";
 
 export default function MonthlySalesChart() {
+  const [chartSeries, setChartSeries] = useState([{
+    name: "Orders",
+    data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  }]);
+
+  useEffect(() => {
+    const fetchOrdersData = async () => {
+      try {
+        const response = await ordersAPI.getAll();
+        const ordersData = response.data?.data || response.data || [];
+
+        if (Array.isArray(ordersData)) {
+          // Initialize monthly counts
+          const monthlyCounts = new Array(12).fill(0);
+          
+          // Count orders by month
+          ordersData.forEach(order => {
+            if (order.createdAt) {
+              const month = new Date(order.createdAt).getMonth();
+              monthlyCounts[month]++;
+            }
+          });
+
+          setChartSeries([{
+            name: "Orders",
+            data: monthlyCounts,
+          }]);
+        }
+      } catch (error) {
+        console.error('Error fetching orders data:', error);
+        // Keep default empty data on error
+      }
+    };
+
+    fetchOrdersData();
+  }, []);
   const options: ApexOptions = {
     colors: ["#465fff"],
     chart: {
@@ -85,12 +122,7 @@ export default function MonthlySalesChart() {
       },
     },
   };
-  const series = [
-    {
-      name: "Sales",
-      data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
-    },
-  ];
+
   const [isOpen, setIsOpen] = useState(false);
 
   function toggleDropdown() {
@@ -133,7 +165,7 @@ export default function MonthlySalesChart() {
 
       <div className="max-w-full overflow-x-auto custom-scrollbar">
         <div className="-ml-5 min-w-[650px] xl:min-w-full pl-2">
-          <Chart options={options} series={series} type="bar" height={180} />
+          <Chart options={options} series={chartSeries} type="bar" height={180} />
         </div>
       </div>
     </div>
