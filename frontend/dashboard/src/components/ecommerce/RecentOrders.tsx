@@ -67,10 +67,10 @@ export default function RecentOrders() {
       try {
         setLoading(true);
         const response = await ordersAPI.getAll();
-        // Handle backend response format: { success: true, data: [...], pagination: {...} }
-        const ordersData = response.data?.data || response.data || [];
+        // Backend returns { success: true, data: [...] }
+        const ordersData = Array.isArray(response.data?.data) ? response.data.data : [];
         // Get recent 5 orders
-        const recentOrders = Array.isArray(ordersData) ? ordersData.slice(0, 5) : [];
+        const recentOrders = ordersData.slice(0, 5);
         setOrders(recentOrders);
         setError(null);
       } catch (err: any) {
