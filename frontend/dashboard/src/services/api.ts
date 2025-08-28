@@ -108,23 +108,23 @@ export const dashboardAPI = {
         ordersAPI.getAll(),
       ]);
 
-  // Use backend format: { success: true, data: [...] }
-  const companiesData = Array.isArray(companies.data?.data) ? companies.data.data : [];
-  const clientsData = Array.isArray(clients.data?.data) ? clients.data.data : [];
-  const productsData = Array.isArray(products.data?.data) ? products.data.data : [];
-  const ordersData = Array.isArray(orders.data?.data) ? orders.data.data : [];
+      // Handle backend response format: { success: true, data: [...], pagination: {...} }
+      const companiesData = companies.data?.data || companies.data || [];
+      const clientsData = clients.data?.data || clients.data || [];
+      const productsData = products.data?.data || products.data || [];
+      const ordersData = orders.data?.data || orders.data || [];
 
       return {
         totalUsers: 0, // Remove user count for now - requires admin access
-        totalCompanies: companiesData.length || 0,
-        totalClients: clientsData.length || 0,
-        totalProducts: productsData.length || 0,
-        totalOrders: ordersData.length || 0,
+        totalCompanies: Array.isArray(companiesData) ? companiesData.length : 0,
+        totalClients: Array.isArray(clientsData) ? clientsData.length : 0,
+        totalProducts: Array.isArray(productsData) ? productsData.length : 0,
+        totalOrders: Array.isArray(ordersData) ? ordersData.length : 0,
         users: [], // Remove users data - requires admin access
-        companies: companiesData,
-        clients: clientsData,
-        products: productsData,
-        orders: ordersData,
+        companies: Array.isArray(companiesData) ? companiesData : [],
+        clients: Array.isArray(clientsData) ? clientsData : [],
+        products: Array.isArray(productsData) ? productsData : [],
+        orders: Array.isArray(ordersData) ? ordersData : [],
       };
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);

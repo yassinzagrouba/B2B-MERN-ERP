@@ -1,50 +1,8 @@
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 import ChartTab from "../common/ChartTab";
-import { useState, useEffect } from "react";
-import { companiesAPI, clientsAPI } from "../../services/api";
 
 export default function StatisticsChart() {
-  const [companiesData, setCompaniesData] = useState([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-  const [clientsData, setClientsData] = useState([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [companiesResponse, clientsResponse] = await Promise.all([
-          companiesAPI.getAll(),
-          clientsAPI.getAll(),
-        ]);
-        
-        const companies = Array.isArray(companiesResponse.data?.data) ? companiesResponse.data.data : [];
-        const clients = Array.isArray(clientsResponse.data?.data) ? clientsResponse.data.data : [];
-        
-        // Initialize monthly counts
-        const monthlyCompanies = new Array(12).fill(0);
-        const monthlyClients = new Array(12).fill(0);
-        
-        // Count companies by month
-        companies.forEach((company: any) => {
-          const month = new Date(company.createdAt).getMonth();
-          monthlyCompanies[month]++;
-        });
-        
-        // Count clients by month
-        clients.forEach((client: any) => {
-          const month = new Date(client.createdAt).getMonth();
-          monthlyClients[month]++;
-        });
-        
-        setCompaniesData(monthlyCompanies);
-        setClientsData(monthlyClients);
-      } catch (error) {
-        console.error('Error fetching statistics data:', error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
   const options: ApexOptions = {
     legend: {
       show: false, // Hide legend
@@ -96,25 +54,13 @@ export default function StatisticsChart() {
       enabled: false, // Disable data labels
     },
     tooltip: {
-      custom: function ({ series, seriesIndex, dataPointIndex, w }) {
-        // Access categories (month labels) from chart options
-        const categories = w.globals.labels || [
-          "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-        ];
-        const month = categories[dataPointIndex] || `Month ${dataPointIndex + 1}`;
-        const value = series[seriesIndex][dataPointIndex];
-        const seriesName = w.globals.seriesNames ? w.globals.seriesNames[seriesIndex] : `Series ${seriesIndex + 1}`;
-        
-        return (
-          '<div class="arrow_box">' +
-          "<span>" + seriesName + " in " + month + ": " + value + "</span>" +
-          "</div>"
-        );
+      enabled: true, // Enable tooltip
+      x: {
+        format: "dd MMM yyyy", // Format for x-axis tooltip
       },
     },
     xaxis: {
-      type: "category", // Define x-axis type as category
+      type: "category", // Category-based x-axis
       categories: [
         "Jan",
         "Feb",
@@ -128,36 +74,43 @@ export default function StatisticsChart() {
         "Oct",
         "Nov",
         "Dec",
-      ], // Define category labels for x-axis
+      ],
       axisBorder: {
         show: false, // Hide x-axis border
       },
       axisTicks: {
         show: false, // Hide x-axis ticks
       },
+      tooltip: {
+        enabled: false, // Disable tooltip for x-axis points
+      },
     },
     yaxis: {
-      title: {
+      labels: {
         style: {
-          fontSize: "0px", // Hide y-axis title by setting font size to 0
+          fontSize: "12px", // Adjust font size for y-axis labels
+          colors: ["#6B7280"], // Color of the labels
         },
       },
-      min: 0, // Set minimum value for y-axis
-      max: 250, // Set maximum value for y-axis
+      title: {
+        text: "", // Remove y-axis title
+        style: {
+          fontSize: "0px",
+        },
+      },
     },
   };
 
   const series = [
     {
-      name: "Companies",
-      data: companiesData,
+      name: "Sales",
+      data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235],
     },
     {
-      name: "Clients",
-      data: clientsData,
+      name: "Revenue",
+      data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
     },
   ];
-
   return (
     <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
       <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
@@ -166,7 +119,7 @@ export default function StatisticsChart() {
             Statistics
           </h3>
           <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-            Monthly growth of companies and clients
+            Target you’ve set for each month
           </p>
         </div>
         <div className="flex items-start w-full gap-3 sm:justify-end">
@@ -174,8 +127,10 @@ export default function StatisticsChart() {
         </div>
       </div>
 
-      <div>
-        <Chart options={options} series={series} type="area" height={310} />
+      <div className="max-w-full overflow-x-auto custom-scrollbar">
+        <div className="min-w-[1000px] xl:min-w-full">
+          <Chart options={options} series={series} type="area" height={310} />
+        </div>
       </div>
     </div>
   );

@@ -3,35 +3,9 @@ import { ApexOptions } from "apexcharts";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
-import { useState, useEffect } from "react";
-import { ordersAPI } from "../../services/api";
+import { useState } from "react";
 
 export default function MonthlySalesChart() {
-  const [chartData, setChartData] = useState([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-
-  useEffect(() => {
-    const fetchOrderData = async () => {
-      try {
-        const response = await ordersAPI.getAll();
-        const ordersData = Array.isArray(response.data?.data) ? response.data.data : [];
-        
-        // Initialize monthly counts
-        const monthlyOrders = new Array(12).fill(0);
-        
-        // Count orders by month
-        ordersData.forEach((order: any) => {
-          const month = new Date(order.createdAt).getMonth();
-          monthlyOrders[month]++;
-        });
-        
-        setChartData(monthlyOrders);
-      } catch (error) {
-        console.error('Error fetching order data:', error);
-      }
-    };
-
-    fetchOrderData();
-  }, []);
   const options: ApexOptions = {
     colors: ["#465fff"],
     chart: {
@@ -113,8 +87,8 @@ export default function MonthlySalesChart() {
   };
   const series = [
     {
-      name: "Orders",
-      data: chartData,
+      name: "Sales",
+      data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
     },
   ];
   const [isOpen, setIsOpen] = useState(false);
@@ -130,7 +104,7 @@ export default function MonthlySalesChart() {
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Monthly Orders
+          Monthly Sales
         </h3>
         <div className="relative inline-block">
           <button className="dropdown-toggle" onClick={toggleDropdown}>
