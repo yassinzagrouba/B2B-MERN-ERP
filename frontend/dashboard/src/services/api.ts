@@ -24,16 +24,39 @@ API.interceptors.request.use(
   }
 );
 
-// Add response interceptor to handle token expiration
+// Add response interceptor to handle token expiration and auto-refresh
 API.interceptors.response.use(
   (response: AxiosResponse) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      // Don't automatically redirect, let the auth context handle it
-      // window.location.href = '/signin';
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        // Try to refresh the token
+        const refreshResponse = await axios.post('http://localhost:5000/api/auth/refresh', {}, {
+          withCredentials: true
+        });
+        
+        const { accessToken } = refreshResponse.data;
+        localStorage.setItem('token', accessToken);
+        
+        // Update the failed request with new token
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        }
+        
+        // Retry the original request
+        return API(originalRequest);
+      } catch (refreshError) {
+        // Refresh failed, user needs to login again
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/signin';
+      }
     }
+    
     return Promise.reject(error);
   }
 );
@@ -95,6 +118,26 @@ export const ordersAPI = {
   update: (id: string, orderData: any) => API.put(`/orders/${id}`, orderData),
   delete: (id: string) => API.delete(`/orders/${id}`),
   updateStatus: (id: string, status: string) => API.patch(`/orders/${id}/status`, { status }),
+};
+
+// Analytics API
+export const analyticsAPI = {
+  // Sales Analytics
+  getSalesReport: (period: 'day' | 'week' | 'month' | 'year') => 
+    API.get(`/analytics/sales?period=${period}`),
+  getRevenueReport: (startDate: string, endDate: string) => 
+    API.get(`/analytics/revenue?start=${startDate}&end=${endDate}`),
+  
+  // Performance Metrics
+  getTopProducts: (limit?: number) => API.get(`/analytics/top-products?limit=${limit || 10}`),
+  getTopClients: (limit?: number) => API.get(`/analytics/top-clients?limit=${limit || 10}`),
+  
+  // Growth Analytics
+  getGrowthMetrics: () => API.get('/analytics/growth'),
+  getConversionRates: () => API.get('/analytics/conversion'),
+  
+  // Monthly Target Analytics
+  getMonthlyTarget: () => API.get('/analytics/monthly-target'),
 };
 
 // Dashboard API - for getting statistics

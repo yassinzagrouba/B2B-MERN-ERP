@@ -8,6 +8,10 @@ import DemographicCard from "../../components/ecommerce/DemographicCard";
 import PageMeta from "../../components/common/PageMeta";
 import { dashboardAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
+import SalesAnalyticsCard from "../../components/analytics/SalesAnalyticsCard";
+import TopPerformersCard from "../../components/analytics/TopPerformersCard";
+import GrowthMetricsCard from "../../components/analytics/GrowthMetricsCard";
+import ConversionRatesCard from "../../components/analytics/ConversionRatesCard";
 
 interface DashboardStats {
   totalUsers: number;
@@ -172,6 +176,36 @@ export default function Home() {
 
         <div className="col-span-12 xl:col-span-7">
           <RecentOrders />
+        </div>
+      </div>
+
+      {/* Analytics Section */}
+      <div className="mt-8">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics & Insights</h2>
+          <p className="text-gray-600 dark:text-gray-400">Advanced analytics and performance metrics</p>
+        </div>
+
+        <div className="grid grid-cols-12 gap-4 md:gap-6">
+          {/* Sales Analytics */}
+          <div className="col-span-12 xl:col-span-8">
+            <SalesAnalyticsCard />
+          </div>
+
+          {/* Growth Metrics */}
+          <div className="col-span-12 xl:col-span-4">
+            <GrowthMetricsCard />
+          </div>
+
+          {/* Top Performers */}
+          <div className="col-span-12 xl:col-span-6">
+            <TopPerformersCard />
+          </div>
+
+          {/* Conversion Rates */}
+          <div className="col-span-12 xl:col-span-6">
+            <ConversionRatesCard />
+          </div>
         </div>
       </div>
     </>

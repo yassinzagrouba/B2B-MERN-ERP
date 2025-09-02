@@ -48,6 +48,10 @@ app.use('/api/products', productRoutes);
 const orderRoutes = require('./routes/order');
 app.use('/api/orders', orderRoutes);
 
+// Importer les routes analytics
+const analyticsRoutes = require('./routes/analytics');
+app.use('/api/analytics', analyticsRoutes);
+
 /*// Importer les routes de test
 const testRoutes = require('./routes/test');
 app.use('/api/test', testRoutes);*/

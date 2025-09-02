@@ -14,7 +14,7 @@ const generateTokens = (userId, userRole) => {
   const accessToken = jwt.sign(
     { id: userId, role: userRole },
     process.env.JWT_SECRET,
-    { expiresIn: '15m' } // Short-lived access token
+    { expiresIn: '7d' } // 7 days instead of 15 minutes
   );
 
   const refreshToken = crypto.randomBytes(64).toString('hex');
@@ -84,13 +84,13 @@ router.post('/login', async (req, res) => {
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 15 * 60 * 1000 // 15 minutes
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
 
     // Retourner les tokens et les infos utiles
@@ -107,8 +107,8 @@ router.post('/login', async (req, res) => {
       },
       message: `Connecté en tant que ${user.role}`,
       tokenInfo: {
-        accessTokenExpires: '15 minutes',
-        refreshTokenExpires: '7 days'
+        accessTokenExpires: '7 days',
+        refreshTokenExpires: '30 days'
       },
       instructions: {
         automatic: "Tokens saved as cookies - automatic refresh when access token expires",
@@ -161,13 +161,13 @@ router.post('/refresh', async (req, res) => {
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 15 * 60 * 1000 // 15 minutes
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
     res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
 
     res.status(200).json({
