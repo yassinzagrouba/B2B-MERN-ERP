@@ -2,6 +2,8 @@
 const Order = require('../models/Order');
 const Client = require('../models/Client');
 const Product = require('../models/Product');
+const User = require('../models/User');
+const { createNotification } = require('./notificationController');
 
 // Récupérer toutes les commandes avec pagination, recherche et filtrage
 const getAllOrders = async (req, res) => {
@@ -121,6 +123,37 @@ const createOrder = async (req, res) => {
     const populatedOrder = await Order.findById(savedOrder._id)
       .populate('clientid', 'name email')
       .populate('productid', 'name price');
+      
+    // Create notification for admin users
+    try {
+      // Find all admin users
+      const admins = await User.find({ role: 'admin' });
+      
+      // Create notifications for each admin
+      for (const admin of admins) {
+        await createNotification(
+          admin._id,
+          `New order created for ${client.name}`,
+          'order',
+          savedOrder._id,
+          'Order'
+        );
+      }
+      
+      // Also notify the user who created the order if they're not an admin
+      if (req.user && !admins.some(admin => admin._id.toString() === req.user.id)) {
+        await createNotification(
+          req.user.id,
+          `You created a new order for ${client.name}`,
+          'order',
+          savedOrder._id,
+          'Order'
+        );
+      }
+    } catch (notifError) {
+      console.error('Error creating notification:', notifError);
+      // Continue with the response even if notification creation fails
+    }
 
     res.status(201).json({
       success: true,
@@ -187,6 +220,40 @@ const updateOrder = async (req, res) => {
       { new: true, runValidators: true }
     ).populate('clientid', 'name email')
      .populate('productid', 'name price');
+     
+    // Create notification if status has changed
+    if (status && existingOrder.status !== status) {
+      try {
+        // Find all admin users
+        const admins = await User.find({ role: 'admin' });
+        const statusChange = `Order #${updatedOrder._id.toString().slice(-6)} status updated to ${status}`;
+        
+        // Create notifications for each admin
+        for (const admin of admins) {
+          await createNotification(
+            admin._id,
+            statusChange,
+            'order',
+            updatedOrder._id,
+            'Order'
+          );
+        }
+        
+        // Also notify the user who updated the order if they're not an admin
+        if (req.user && !admins.some(admin => admin._id.toString() === req.user.id)) {
+          await createNotification(
+            req.user.id,
+            `You updated ${updatedOrder.clientid.name}'s order status to ${status}`,
+            'order',
+            updatedOrder._id,
+            'Order'
+          );
+        }
+      } catch (notifError) {
+        console.error('Error creating status change notification:', notifError);
+        // Continue with the response even if notification creation fails
+      }
+    }
 
     res.status(200).json({
       success: true,

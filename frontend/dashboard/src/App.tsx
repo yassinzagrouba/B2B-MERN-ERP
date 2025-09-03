@@ -26,13 +26,16 @@ import OrdersManagement from "./pages/OrdersManagement";
 import ProductsManagement from "./pages/ProductsManagement";
 import ClientsManagement from "./pages/ClientsManagement";
 import CompaniesManagement from "./pages/CompaniesManagement";
+import Notifications from "./pages/Notifications";
 import ApiTester from "./components/debug/ApiTester";
+import SeedNotificationsButton from "./components/debug/SeedNotificationsButton";
 
 export default function App() {
   return (
     <AuthProvider>
       <Router>
         <ScrollToTop />
+        {import.meta.env.DEV && <SeedNotificationsButton />}
         <Routes>
           {/* Dashboard Layout - Protected Routes */}
           <Route 
@@ -61,6 +64,7 @@ export default function App() {
             <Route path="/products" element={<ProductsManagement />} />
             <Route path="/clients" element={<ClientsManagement />} />
             <Route path="/companies" element={<CompaniesManagement />} />
+            <Route path="/notifications" element={<Notifications />} />
             
             {/* Debug Tools */}
             <Route path="/debug" element={<ApiTester />} />
