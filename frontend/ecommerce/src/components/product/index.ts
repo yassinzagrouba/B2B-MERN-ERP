@@ -1,0 +1,10 @@
+export { default as FeaturedProducts } from './FeaturedProducts';
+export { default as ProductFilter } from './ProductFilter';
+export { default as ProductGallery } from './ProductGallery';
+export { default as SortOptions } from './SortOptions';
+export { default as RelatedProducts } from './RelatedProducts';
+export { default as RecentlyViewed } from './RecentlyViewed';
+export { default as PersonalizedRecommendations } from './PersonalizedRecommendations';
+export { default as QuickViewModal } from './QuickViewModal';
+export { default as ViewToggle } from './ViewToggle';
+export { default as ProductListItem } from './ProductListItem';
