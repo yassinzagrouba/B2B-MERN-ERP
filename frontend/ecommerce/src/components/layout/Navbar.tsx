@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
 import { logout } from '../../redux/userSlice';
@@ -8,6 +8,8 @@ export default function Navbar() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   
   const { user } = useAppSelector((state) => state.user);
   const { items } = useAppSelector((state) => state.cart);
@@ -18,6 +20,20 @@ export default function Navbar() {
     dispatch(logout());
     navigate('/login');
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <nav className="bg-white shadow-md">
@@ -44,6 +60,14 @@ export default function Navbar() {
               {user?.isAdmin && (
                 <DashboardLink className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md font-medium" />
               )}
+              {user && (
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-700 hover:text-red-600 px-3 py-2 rounded-md font-medium"
+                >
+                  Sign Out
+                </button>
+              )}
             </div>
           </div>
           
@@ -51,11 +75,11 @@ export default function Navbar() {
           <div className="hidden md:block">
             <div className="ml-4 flex items-center md:ml-6">
               {user ? (
-                <div className="relative ml-3">
+                <div className="relative ml-3" ref={userMenuRef}>
                   <div>
                     <button
-                      onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                      className="max-w-xs flex items-center text-sm rounded-full text-gray-700 focus:outline-none"
+                      onClick={() => setUserMenuOpen(!userMenuOpen)}
+                      className="max-w-xs flex items-center text-sm rounded-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       <span className="mr-2">{user.name}</span>
                       <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -63,10 +87,10 @@ export default function Navbar() {
                       </svg>
                     </button>
                   </div>
-                  {mobileMenuOpen && (
-                    <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  {userMenuOpen && (
+                    <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
                       <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</Link>
-                      <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</button>
+                      <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-medium">Sign out</button>
                     </div>
                   )}
                 </div>
@@ -140,7 +164,7 @@ export default function Navbar() {
             <div className="px-2 space-y-1">
               <div className="block px-3 py-2 text-base font-medium text-gray-700">Hello, {user.name}</div>
               <Link to="/profile" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50">Profile</Link>
-              <button onClick={handleLogout} className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50">Sign out</button>
+              <button onClick={handleLogout} className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-100 hover:text-red-700 border border-red-200 mt-2">Sign out</button>
             </div>
           ) : (
             <div className="px-2 space-y-1">
