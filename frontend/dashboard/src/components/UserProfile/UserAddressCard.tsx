@@ -3,13 +3,71 @@ import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
+import { useAuth } from "../../context/AuthContext";
+import { useState } from "react";
+import { usersAPI } from "../../services/api";
+import toast from "react-hot-toast";
 
 export default function UserAddressCard() {
   const { isOpen, openModal, closeModal } = useModal();
-  const handleSave = () => {
-    // Handle save logic here
-    console.log("Saving changes...");
-    closeModal();
+  const { user, updateUser } = useAuth();
+  
+  const [formData, setFormData] = useState({
+    country: "",
+    city: "",
+    postalCode: "",
+    address: ""
+  });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Handle input changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
+
+  const handleSave = async () => {
+    if (!user?.id) {
+      toast.error("User information not found");
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Create the data object to send to the API
+      const userData = {
+        address: {
+          country: formData.country,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          streetAddress: formData.address
+        }
+      };
+
+      // Update user profile in the backend
+      await usersAPI.update(user.id, userData);
+      
+      // Update user in the context and local storage
+      updateUser({
+        address: userData.address
+      });
+      
+      // Show success message
+      toast.success("Address updated successfully");
+      
+      // Close the modal
+      closeModal();
+    } catch (error) {
+      console.error("Error updating address:", error);
+      toast.error("Failed to update address. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   return (
     <>
@@ -25,8 +83,8 @@ export default function UserAddressCard() {
                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                   Country
                 </p>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 italic">
-                  Not specified
+                <p className={`text-sm font-medium ${user?.address?.country ? 'text-gray-800 dark:text-white/90' : 'text-gray-500 dark:text-gray-400 italic'}`}>
+                  {user?.address?.country || 'Not specified'}
                 </p>
               </div>
 
@@ -34,8 +92,8 @@ export default function UserAddressCard() {
                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                   City/State
                 </p>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 italic">
-                  Not specified
+                <p className={`text-sm font-medium ${user?.address?.city ? 'text-gray-800 dark:text-white/90' : 'text-gray-500 dark:text-gray-400 italic'}`}>
+                  {user?.address?.city || 'Not specified'}
                 </p>
               </div>
 
@@ -43,17 +101,17 @@ export default function UserAddressCard() {
                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
                   Postal Code
                 </p>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 italic">
-                  Not specified
+                <p className={`text-sm font-medium ${user?.address?.postalCode ? 'text-gray-800 dark:text-white/90' : 'text-gray-500 dark:text-gray-400 italic'}`}>
+                  {user?.address?.postalCode || 'Not specified'}
                 </p>
               </div>
 
               <div>
                 <p className="mb-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
-                  TAX ID
+                  Address
                 </p>
-                <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  AS4568384
+                <p className={`text-sm font-medium ${user?.address?.streetAddress ? 'text-gray-800 dark:text-white/90' : 'text-gray-500 dark:text-gray-400 italic'}`}>
+                  {user?.address?.streetAddress || 'Not specified'}
                 </p>
               </div>
             </div>
@@ -97,31 +155,55 @@ export default function UserAddressCard() {
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                 <div>
                   <Label>Country</Label>
-                  <Input type="text" value="United States" />
+                  <Input 
+                    type="text" 
+                    name="country"
+                    value={formData.country} 
+                    onChange={handleChange}
+                    placeholder="Enter your country"
+                  />
                 </div>
 
                 <div>
                   <Label>City/State</Label>
-                  <Input type="text" value="Arizona, United States." />
+                  <Input 
+                    type="text" 
+                    name="city"
+                    value={formData.city} 
+                    onChange={handleChange}
+                    placeholder="Enter your city or state"
+                  />
                 </div>
 
                 <div>
                   <Label>Postal Code</Label>
-                  <Input type="text" value="ERT 2489" />
+                  <Input 
+                    type="text" 
+                    name="postalCode"
+                    value={formData.postalCode} 
+                    onChange={handleChange}
+                    placeholder="Enter your postal code"
+                  />
                 </div>
 
                 <div>
-                  <Label>TAX ID</Label>
-                  <Input type="text" value="AS4568384" />
+                  <Label>Address</Label>
+                  <Input 
+                    type="text" 
+                    name="address"
+                    value={formData.address} 
+                    onChange={handleChange}
+                    placeholder="Enter your street address"
+                  />
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
+              <Button size="sm" variant="outline" onClick={closeModal} disabled={isSubmitting}>
                 Close
               </Button>
-              <Button size="sm" onClick={handleSave}>
-                Save Changes
+              <Button size="sm" onClick={handleSave} disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           </form>

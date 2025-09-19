@@ -20,6 +20,7 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import { Toaster } from "react-hot-toast";
 
 // CRUD Management Pages
 import OrdersManagement from "./pages/OrdersManagement";
@@ -35,6 +36,7 @@ export default function App() {
     <AuthProvider>
       <Router>
         <ScrollToTop />
+        <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
         {import.meta.env.DEV && <SeedNotificationsButton />}
         <Routes>
           {/* Dashboard Layout - Protected Routes */}

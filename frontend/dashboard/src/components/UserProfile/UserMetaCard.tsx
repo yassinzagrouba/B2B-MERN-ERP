@@ -4,15 +4,81 @@ import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import { useAuth } from "../../context/AuthContext";
+import { useState } from "react";
+import { usersAPI } from "../../services/api";
+import toast from "react-hot-toast";
 
 export default function UserMetaCard() {
   const { isOpen, openModal, closeModal } = useModal();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: user?.email || "",
+    phone: "",
+    bio: "",
+    facebook: "https://www.facebook.com/PimjoHQ",
+    twitter: "https://x.com/PimjoHQ",
+    linkedin: "https://www.linkedin.com/company/pimjo",
+    instagram: "https://instagram.com/PimjoHQ"
+  });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSave = () => {
-    // Handle save logic here
-    console.log("Saving changes...");
-    closeModal();
+  // Handle input changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
+
+  const handleSave = async () => {
+    if (!user?.id) {
+      toast.error("User information not found");
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Create the data object to send to the API
+      const userData = {
+        username: `${formData.firstName} ${formData.lastName}`.trim() || user.username,
+        email: formData.email || user.email,
+        // Only include other fields if they have values
+        ...(formData.phone && { phone: formData.phone }),
+        ...(formData.bio && { bio: formData.bio }),
+        socialMedia: {
+          facebook: formData.facebook,
+          twitter: formData.twitter,
+          linkedin: formData.linkedin,
+          instagram: formData.instagram
+        }
+      };
+
+      // Update user profile in the backend
+      await usersAPI.update(user.id, userData);
+      
+      // Update user in the context and local storage
+      updateUser({
+        username: userData.username,
+        email: userData.email
+      });
+      
+      // Show success message
+      toast.success("Profile updated successfully");
+      
+      // Close the modal
+      closeModal();
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Generate user avatar initials if no image is available
@@ -181,26 +247,40 @@ export default function UserMetaCard() {
                     <Label>Facebook</Label>
                     <Input
                       type="text"
-                      value="https://www.facebook.com/PimjoHQ"
+                      name="facebook"
+                      value={formData.facebook}
+                      onChange={handleChange}
                     />
                   </div>
 
                   <div>
                     <Label>X.com</Label>
-                    <Input type="text" value="https://x.com/PimjoHQ" />
+                    <Input 
+                      type="text" 
+                      name="twitter"
+                      value={formData.twitter} 
+                      onChange={handleChange}
+                    />
                   </div>
 
                   <div>
                     <Label>Linkedin</Label>
                     <Input
                       type="text"
-                      value="https://www.linkedin.com/company/pimjo"
+                      name="linkedin"
+                      value={formData.linkedin}
+                      onChange={handleChange}
                     />
                   </div>
 
                   <div>
                     <Label>Instagram</Label>
-                    <Input type="text" value="https://instagram.com/PimjoHQ" />
+                    <Input 
+                      type="text" 
+                      name="instagram"
+                      value={formData.instagram} 
+                      onChange={handleChange}
+                    />
                   </div>
                 </div>
               </div>
@@ -212,37 +292,67 @@ export default function UserMetaCard() {
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                   <div className="col-span-2 lg:col-span-1">
                     <Label>First Name</Label>
-                    <Input type="text" value="Musharof" />
+                    <Input 
+                      type="text" 
+                      name="firstName"
+                      value={formData.firstName} 
+                      onChange={handleChange}
+                      placeholder={user?.username?.split(' ')[0] || "First Name"}
+                    />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Last Name</Label>
-                    <Input type="text" value="Chowdhury" />
+                    <Input 
+                      type="text" 
+                      name="lastName"
+                      value={formData.lastName} 
+                      onChange={handleChange}
+                      placeholder={user?.username?.split(' ')[1] || "Last Name"}
+                    />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Email Address</Label>
-                    <Input type="text" value="randomuser@pimjo.com" />
+                    <Input 
+                      type="email" 
+                      name="email"
+                      value={formData.email} 
+                      onChange={handleChange}
+                      placeholder={user?.email || "Email Address"}
+                    />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Phone</Label>
-                    <Input type="text" value="+09 363 398 46" />
+                    <Input 
+                      type="text" 
+                      name="phone"
+                      value={formData.phone} 
+                      onChange={handleChange}
+                      placeholder="Phone Number"
+                    />
                   </div>
 
                   <div className="col-span-2">
                     <Label>Bio</Label>
-                    <Input type="text" value="Team Manager" />
+                    <Input 
+                      type="text" 
+                      name="bio"
+                      value={formData.bio} 
+                      onChange={handleChange}
+                      placeholder="Bio"
+                    />
                   </div>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
+              <Button size="sm" variant="outline" onClick={closeModal} disabled={isSubmitting}>
                 Close
               </Button>
-              <Button size="sm" onClick={handleSave}>
-                Save Changes
+              <Button size="sm" onClick={handleSave} disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           </form>

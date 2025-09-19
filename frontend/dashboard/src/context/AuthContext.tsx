@@ -1,11 +1,19 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authAPI } from '../services/api';
 
+interface Address {
+  country?: string;
+  city?: string;
+  postalCode?: string;
+  streetAddress?: string;
+}
+
 interface User {
   id: string;
   username: string;
   email: string;
   role: string;
+  address?: Address;
 }
 
 interface AuthContextType {
@@ -14,6 +22,7 @@ interface AuthContextType {
   logout: () => void;
   loading: boolean;
   isAuthenticated: boolean;
+  updateUser: (userData: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -83,6 +92,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Optionally call logout endpoint
     authAPI.logout().catch(console.error);
   };
+  
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
 
   const value: AuthContextType = {
     user,
@@ -90,6 +107,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     loading,
     isAuthenticated,
+    updateUser,
   };
 
   return (

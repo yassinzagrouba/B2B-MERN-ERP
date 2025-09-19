@@ -4,15 +4,69 @@ import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import { useAuth } from "../../context/AuthContext";
+import { useState } from "react";
+import { usersAPI } from "../../services/api";
+import toast from "react-hot-toast";
 
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: user?.email || "",
+    role: user?.role || ""
+  });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Handle input changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
 
-  const handleSave = () => {
-    // Handle save logic here
-    console.log("Saving changes...");
-    closeModal();
+  const handleSave = async () => {
+    if (!user?.id) {
+      toast.error("User information not found");
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Create the data object to send to the API
+      const userData = {
+        username: `${formData.firstName} ${formData.lastName}`.trim() || user.username,
+        email: formData.email || user.email,
+        role: formData.role || user.role
+      };
+
+      // Update user profile in the backend
+      await usersAPI.update(user.id, userData);
+      
+      // Update user in the context and local storage
+      updateUser({
+        username: userData.username,
+        email: userData.email,
+        role: userData.role
+      });
+      
+      // Show success message
+      toast.success("Personal information updated successfully");
+      
+      // Close the modal
+      closeModal();
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update personal information. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Parse the username to get first and last name
@@ -161,37 +215,57 @@ export default function UserInfoCard() {
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                   <div className="col-span-2 lg:col-span-1">
                     <Label>First Name</Label>
-                    <Input type="text" value="Musharof" />
+                    <Input 
+                      type="text" 
+                      name="firstName"
+                      value={formData.firstName} 
+                      onChange={handleChange}
+                      placeholder={user?.username?.split(' ')[0] || "First Name"}
+                    />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Last Name</Label>
-                    <Input type="text" value="Chowdhury" />
+                    <Input 
+                      type="text" 
+                      name="lastName"
+                      value={formData.lastName} 
+                      onChange={handleChange}
+                      placeholder={user?.username?.split(' ')[1] || "Last Name"}
+                    />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Email Address</Label>
-                    <Input type="text" value="randomuser@pimjo.com" />
+                    <Input 
+                      type="email" 
+                      name="email"
+                      value={formData.email} 
+                      onChange={handleChange}
+                      placeholder={user?.email || "Email Address"}
+                    />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
-                    <Label>Phone</Label>
-                    <Input type="text" value="+09 363 398 46" />
-                  </div>
-
-                  <div className="col-span-2">
-                    <Label>Bio</Label>
-                    <Input type="text" value="Team Manager" />
+                    <Label>Role</Label>
+                    <Input 
+                      type="text" 
+                      name="role"
+                      value={formData.role} 
+                      onChange={handleChange}
+                      placeholder={user?.role || "Role"}
+                      disabled // Role should usually not be editable by the user
+                    />
                   </div>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
+              <Button size="sm" variant="outline" onClick={closeModal} disabled={isSubmitting}>
                 Close
               </Button>
-              <Button size="sm" onClick={handleSave}>
-                Save Changes
+              <Button size="sm" onClick={handleSave} disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           </form>
