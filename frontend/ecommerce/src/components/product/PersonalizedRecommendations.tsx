@@ -1,6 +1,7 @@
 import { useAppSelector } from '../../redux/hooks';
 import ProductCard from '../ui/ProductCard';
 import { Product } from '../../types';
+import { enrichProducts } from '../../utils/productEnricher';
 
 interface PersonalizedRecommendationsProps {
   currentProductId?: string;
@@ -23,9 +24,12 @@ const PersonalizedRecommendations = ({
   const getRecommendations = (): Product[] => {
     if (products.length === 0) return [];
     
+    // First enrich products to ensure consistent format
+    const enrichedProducts = enrichProducts(products);
+    
     // Categories of items in cart
     const cartCategories = cartItems.map(item => {
-      const product = products.find(p => p._id === item._id);
+      const product = enrichedProducts.find(p => p._id === item._id);
       return product?.category || '';
     }).filter(Boolean);
     
@@ -34,8 +38,8 @@ const PersonalizedRecommendations = ({
     
     // If we have categories, recommend products from those categories
     if (uniqueCategories.length > 0) {
-      const recommendations = products.filter(product => 
-        uniqueCategories.includes(product.category) && 
+      const recommendations = enrichedProducts.filter(product => 
+        product.category && uniqueCategories.includes(product.category) && 
         product._id !== currentProductId &&
         !cartItems.some(item => item._id === product._id)
       ).slice(0, maxItems);
@@ -46,7 +50,7 @@ const PersonalizedRecommendations = ({
       
       // If we don't have enough recommendations, add some random products
       const remainingCount = maxItems - recommendations.length;
-      const randomProducts = products
+      const randomProducts = enrichedProducts
         .filter(product => 
           !recommendations.some(rec => rec._id === product._id) && 
           product._id !== currentProductId &&
@@ -59,7 +63,7 @@ const PersonalizedRecommendations = ({
     }
     
     // If no cart items or categories, just return random products
-    return products
+    return enrichedProducts
       .filter(product => 
         product._id !== currentProductId && 
         !cartItems.some(item => item._id === product._id)
@@ -85,7 +89,7 @@ const PersonalizedRecommendations = ({
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {recommendedProducts.map((product) => (
-            <ProductCard key={product._id} product={product} />
+            <ProductCard key={String(product._id)} product={product} />
           ))}
         </div>
       </div>

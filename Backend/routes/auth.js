@@ -22,6 +22,41 @@ const generateTokens = (userId, userRole) => {
   return { accessToken, refreshToken };
 };
 
+// @route   POST /api/auth/register-admin
+// @desc    Inscrire un nouvel administrateur (pour le dashboard)
+router.post('/register-admin', async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+
+    // Vérifie si l'utilisateur existe déjà
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email déjà utilisé' });
+    }
+
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Créer un nouvel utilisateur admin
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+      role: 'admin' // Force admin role
+    });
+
+    await newUser.save();
+
+    res.status(201).json({ 
+      message: 'Administrateur créé avec succès',
+      isAdmin: true
+    });
+  } catch (err) {
+    console.error('Erreur inscription admin :', err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 // @route   POST /api/auth/register
 // @desc    Inscrire un nouvel utilisateur
 router.post('/register', async (req, res) => {
@@ -37,12 +72,17 @@ router.post('/register', async (req, res) => {
     // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Créer un nouvel utilisateur
+    // Déterminer si la requête vient du dashboard
+    const isDashboard = req.get('X-Source') === 'dashboard' || 
+                        req.get('Referer')?.includes('/dashboard') ||
+                        req.body.source === 'dashboard';
+    
+    // Créer un nouvel utilisateur (admin par défaut si depuis le dashboard)
     const newUser = new User({
       username,
       email,
       password: hashedPassword,
-      role: role || 'user' // Use provided role or default to 'user'
+      role: isDashboard ? 'admin' : (role || 'user') // Auto-assign admin role if from dashboard
     });
 
     await newUser.save();
@@ -79,6 +119,9 @@ router.post('/login', async (req, res) => {
     // Save refresh token to database
     user.refreshTokens.push({ token: refreshToken });
     await user.save();
+    
+    // Clean up any expired refresh tokens
+    await cleanupExpiredTokens(user._id);
 
     // Set tokens as HTTP-only cookies
     res.cookie('accessToken', accessToken, {
@@ -121,6 +164,21 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Helper function to clean up expired refresh tokens
+const cleanupExpiredTokens = async (userId) => {
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    await User.updateOne(
+      { _id: userId },
+      { $pull: { refreshTokens: { createdAt: { $lt: sevenDaysAgo } } } }
+    );
+  } catch (error) {
+    console.error('Error cleaning up expired tokens:', error);
+  }
+};
+
 // @route   POST /api/auth/refresh
 // @desc    Refresh access token using refresh token
 router.post('/refresh', async (req, res) => {
@@ -156,6 +214,9 @@ router.post('/refresh', async (req, res) => {
     );
     user.refreshTokens.push({ token: newRefreshToken });
     await user.save();
+    
+    // Clean up any expired refresh tokens
+    await cleanupExpiredTokens(user._id);
 
     // Set new tokens as cookies
     res.cookie('accessToken', accessToken, {

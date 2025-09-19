@@ -5,13 +5,30 @@ import { ProductGrid, Pagination, Breadcrumb } from '../components/ui';
 import { ProductFilter, SortOptions, ViewToggle, ProductListItem } from '../components/product';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { fetchProducts, fetchCategories } from '../redux/productSlice';
+import { enrichProducts } from '../utils/productEnricher';
+import { Product } from '../types';
 
 export default function ProductsPage() {
   const dispatch = useAppDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { products, loading, error, page, pages, categories } = useAppSelector(
+  const { products: rawProducts, loading, error, page, pages, categories } = useAppSelector(
     (state) => state.products
   );
+  
+  // Process products to ensure consistent format
+  const [products, setProducts] = useState<Product[]>([]);
+  
+  // Enrich products with UI-friendly data and handle clientid
+  useEffect(() => {
+    try {
+      const enriched = enrichProducts(rawProducts);
+      setProducts(enriched);
+      console.log('Products in state:', enriched);
+    } catch (err) {
+      console.error('Error enriching products:', err);
+      setProducts(rawProducts);
+    }
+  }, [rawProducts]);
 
   const [currentPage, setCurrentPage] = useState(
     parseInt(searchParams.get('page') || '1')
@@ -92,14 +109,18 @@ export default function ProductsPage() {
     ...(searchTerm ? [{ name: `Search: "${searchTerm}"`, path: `/products?keyword=${searchTerm}` }] : [])
   ];
 
-  return (
-    <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Breadcrumb items={breadcrumbItems} />
-        
-        <h1 className="text-3xl font-bold mb-8">
-          {selectedCategory ? `${selectedCategory} Products` : 'All Products'}
-        </h1>
+  console.log('Products in state:', products);
+  
+  // Add error handling wrapper
+  try {
+    return (
+      <Layout>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Breadcrumb items={breadcrumbItems} />
+          
+          <h1 className="text-3xl font-bold mb-8">
+            {selectedCategory ? `${selectedCategory} Products` : 'All Products'}
+          </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Filters sidebar */}
@@ -147,7 +168,7 @@ export default function ProductsPage() {
                   </div>
                 ) : (
                   products.map((product) => (
-                    <ProductListItem key={product._id} product={product} />
+                    <ProductListItem key={String(product._id)} product={product} />
                   ))
                 )}
               </div>
@@ -166,4 +187,23 @@ export default function ProductsPage() {
       </div>
     </Layout>
   );
+  } catch (error) {
+    console.error('Error rendering Products page:', error);
+    return (
+      <Layout>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <h2 className="text-lg font-bold mb-2">Error Loading Products</h2>
+            <p>Sorry, there was a problem loading the product listings.</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 }

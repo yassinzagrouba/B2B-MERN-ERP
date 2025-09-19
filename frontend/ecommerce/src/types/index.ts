@@ -1,14 +1,18 @@
+// Separate interface for client to ensure consistent structure
+export interface Client {
+  _id: string;
+  name: string;
+  email: string;
+  company: string;
+}
+
 export interface Product {
   _id: string;
   name: string;
   description: string;
   price: number;
-  clientid?: string | {
-    _id: string;
-    name: string;
-    email: string;
-    company: string;
-  };
+  // Clientid can be either a string or a Client object
+  clientid?: string | Client;
   createdAt: string;
   updatedAt: string;
   image?: string;

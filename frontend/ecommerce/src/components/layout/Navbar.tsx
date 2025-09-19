@@ -60,14 +60,6 @@ export default function Navbar() {
               {user?.isAdmin && (
                 <DashboardLink className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md font-medium" />
               )}
-              {user && (
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-700 hover:text-red-600 px-3 py-2 rounded-md font-medium"
-                >
-                  Sign Out
-                </button>
-              )}
             </div>
           </div>
           

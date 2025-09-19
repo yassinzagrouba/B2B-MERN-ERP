@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Product } from '../../types';
 import { productService } from '../../services/productService';
 import ProductCard from '../ui/ProductCard';
+import { enrichProducts } from '../../utils/productEnricher';
 
 interface RelatedProductsProps {
   currentProductId: string;
@@ -21,11 +22,15 @@ const RelatedProducts = ({ currentProductId, category, limit = 4 }: RelatedProdu
         // Fetch products in the same category
         const response = await productService.getProducts('', 1, category, 'newest');
         // Filter out the current product and limit the number of results
-        const relatedProducts = response.products
+        // Filter related products and enrich them
+        const filteredProducts = response.products
           .filter(product => product._id !== currentProductId)
           .slice(0, limit);
           
-        setProducts(relatedProducts);
+        // Enrich with consistent data
+        const enrichedProducts = enrichProducts(filteredProducts);
+        
+        setProducts(enrichedProducts);
         setLoading(false);
       } catch (err) {
         setError('Failed to fetch related products');
@@ -60,7 +65,7 @@ const RelatedProducts = ({ currentProductId, category, limit = 4 }: RelatedProdu
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Products</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {products.map((product) => (
-            <ProductCard key={product._id} product={product} />
+            <ProductCard key={String(product._id)} product={product} />
           ))}
         </div>
       </div>

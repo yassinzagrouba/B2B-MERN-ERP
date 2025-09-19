@@ -65,6 +65,30 @@ app.get('/', (req, res) => {
   res.send('Bienvenue sur l’API B2B App');
 });
 
+// Scheduled task to clean up expired refresh tokens
+const User = require('./models/User');
+const cleanupExpiredTokens = async () => {
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const result = await User.updateMany(
+      {},
+      { $pull: { refreshTokens: { createdAt: { $lt: sevenDaysAgo } } } }
+    );
+    
+    console.log(`Cleaned up expired refresh tokens: ${new Date().toISOString()}`);
+  } catch (error) {
+    console.error('Error cleaning up expired tokens:', error);
+  }
+};
+
+// Run token cleanup once a day
+setInterval(cleanupExpiredTokens, 24 * 60 * 60 * 1000);
+
+// Initial cleanup on server start
+cleanupExpiredTokens();
+
 // Lancer le serveur
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

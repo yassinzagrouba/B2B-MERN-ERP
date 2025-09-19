@@ -19,18 +19,28 @@ const QuickViewModal = ({ product, isOpen, onClose }: QuickViewModalProps) => {
   
   if (!isOpen || !product) return null;
   
+  // Get values safely
+  const stockLevel = typeof product.stock === 'number' ? product.stock : 0;
+  const productName = product.name || 'Unnamed Product';
+  const productPrice = typeof product.price === 'number' ? product.price : 0;
+  const productImage = product.image || '';
+  const productDescription = product.description || 'No description available';
+  const productRating = typeof product.rating === 'number' ? product.rating : 0;
+  const productReviews = typeof product.numReviews === 'number' ? product.numReviews : 0;
+  const isFeatured = !!product.featured;
+  
   const handleAddToCart = () => {
     dispatch(
       addToCart({
         _id: product._id,
-        name: product.name,
-        image: product.image,
-        price: product.price,
+        name: product.name || 'Product',
+        image: product.image || '',
+        price: typeof product.price === 'number' ? product.price : 0,
         quantity,
       })
     );
     
-    toastSuccess(`${product.name} added to your cart`);
+    toastSuccess(`${product.name || 'Product'} added to your cart`);
     onClose();
   };
   
@@ -68,56 +78,54 @@ const QuickViewModal = ({ product, isOpen, onClose }: QuickViewModalProps) => {
               {/* Product image */}
               <div className="aspect-w-1 aspect-h-1 overflow-hidden rounded-lg">
                 <img
-                  src={product.image}
-                  alt={product.name}
+                  src={productImage}
+                  alt={productName}
                   className="h-full w-full object-cover object-center"
                 />
               </div>
               
               {/* Product info */}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">{productName}</h2>
                 
                 <div className="mb-4">
-                  {product.stock <= 0 && <Badge variant="danger">Out of Stock</Badge>}
-                  {product.stock > 0 && product.stock <= 5 && (
-                    <Badge variant="warning">Low Stock: Only {product.stock} left</Badge>
+                  {stockLevel <= 0 && <Badge variant="danger">Out of Stock</Badge>}
+                  {stockLevel > 0 && stockLevel <= 5 && (
+                    <Badge variant="warning">Low Stock: Only {stockLevel} left</Badge>
                   )}
-                  {product.stock > 5 && <Badge variant="success">In Stock</Badge>}
-                  {product.featured && <Badge variant="info" className="ml-2">Featured</Badge>}
+                  {stockLevel > 5 && <Badge variant="success">In Stock</Badge>}
+                  {isFeatured && <Badge variant="info" className="ml-2">Featured</Badge>}
                 </div>
                 
-                {product.rating && (
-                  <div className="flex items-center mb-4">
-                    <div className="flex">
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <svg
-                          key={index}
-                          className={`w-4 h-4 ${
-                            index < Math.floor(product.rating || 0)
-                              ? 'text-yellow-400'
-                              : 'text-gray-300'
-                          }`}
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                    </div>
-                    <span className="ml-2 text-gray-600">
-                      {product.rating} ({product.numReviews} reviews)
-                    </span>
+                <div className="flex items-center mb-4">
+                  <div className="flex">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <svg
+                        key={index}
+                        className={`w-4 h-4 ${
+                          index < Math.floor(productRating)
+                            ? 'text-yellow-400'
+                            : 'text-gray-300'
+                        }`}
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
                   </div>
-                )}
+                  <span className="ml-2 text-gray-600">
+                    {productRating} ({productReviews} reviews)
+                  </span>
+                </div>
                 
                 <p className="text-xl font-bold text-gray-900 mb-4">
-                  ${product.price.toFixed(2)}
+                  ${productPrice.toFixed(2)}
                 </p>
                 
-                <p className="text-gray-600 mb-6 line-clamp-3">{product.description}</p>
+                <p className="text-gray-600 mb-6 line-clamp-3">{productDescription}</p>
                 
-                {product.stock > 0 ? (
+                {stockLevel > 0 ? (
                   <div>
                     <div className="flex items-center mb-4">
                       <label htmlFor="quick-quantity" className="mr-2 text-gray-700">
@@ -129,7 +137,7 @@ const QuickViewModal = ({ product, isOpen, onClose }: QuickViewModalProps) => {
                         onChange={handleQuantityChange}
                         className="border border-gray-300 rounded-md p-1"
                       >
-                        {[...Array(Math.min(product.stock, 10)).keys()].map(
+                        {[...Array(Math.min(stockLevel, 10)).keys()].map(
                           (x) => (
                             <option key={x + 1} value={x + 1}>
                               {x + 1}

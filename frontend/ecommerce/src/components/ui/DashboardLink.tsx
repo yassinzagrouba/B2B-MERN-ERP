@@ -17,7 +17,7 @@ const DashboardLink: React.FC<DashboardLinkProps> = ({ className }) => {
   useEffect(() => {
     // Set the dashboard URL based on environment or use default
     // For TypeScript with Vite, we need to handle environment variables differently
-    const dashboardBaseUrl = (import.meta as any).env?.VITE_DASHBOARD_URL || 'http://localhost:5174';
+    const dashboardBaseUrl = (import.meta as any).env?.VITE_DASHBOARD_URL || 'http://localhost:3003';
     setDashboardUrl(dashboardBaseUrl);
   }, []);
   

@@ -48,6 +48,7 @@ export default function ProductsManagement() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<ProductData | null>(null);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
+  const [renderingError, setRenderingError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -59,7 +60,21 @@ export default function ProductsManagement() {
       const response = await clientsAPI.getAll();
       // Backend returns { success: true, data: clients, pagination: {...} }
       const clientsData = response.data?.data || response.data;
-      setClients(Array.isArray(clientsData) ? clientsData : []);
+      // Ensure each client object has a proper id and structure
+      const formattedClients = Array.isArray(clientsData) 
+        ? clientsData.map(client => ({
+            _id: client._id,
+            name: client.name,
+            email: client.email,
+            phone: client.phone || '',
+            address: client.address || '',
+            company: client.company ? {
+              _id: client.company._id,
+              name: client.company.name
+            } : undefined
+          }))
+        : [];
+      setClients(formattedClients);
     } catch (err: any) {
       console.error('Failed to fetch clients:', err);
       setClients([]);
@@ -73,7 +88,22 @@ export default function ProductsManagement() {
       
       // Backend returns { success: true, data: products, pagination: {...} }
       const productsData = response.data?.data || response.data;
-      setProducts(Array.isArray(productsData) ? productsData : []);
+      // Ensure each product has proper structure with string IDs
+      const formattedProducts = Array.isArray(productsData) 
+        ? productsData.map(product => ({
+            _id: product._id,
+            name: product.name || '',
+            price: product.price || 0,
+            description: product.description || '',
+            clientid: product.clientid ? {
+              _id: product.clientid._id || product.clientid,
+              name: product.clientid.name || 'Unknown Client'
+            } : undefined,
+            createdAt: product.createdAt,
+            updatedAt: product.updatedAt
+          }))
+        : [];
+      setProducts(formattedProducts);
       setError(null);
     } catch (err: any) {
       console.error('Error fetching products:', err);
@@ -137,11 +167,20 @@ export default function ProductsManagement() {
   };
 
   // Filter products based on search term
-  const filteredProducts = products.filter(product => 
-    product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.clientid?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter(product => {
+    try {
+      const searchTermLower = searchTerm.toLowerCase();
+      return (
+        // Check if these properties exist before calling toLowerCase()
+        (product.name?.toLowerCase() || "").includes(searchTermLower) ||
+        (product.description?.toLowerCase() || "").includes(searchTermLower) ||
+        (product.clientid?.name?.toLowerCase() || "").includes(searchTermLower)
+      );
+    } catch (err) {
+      console.error("Error filtering product:", product, err);
+      return false; // Skip this product if there's an error
+    }
+  });
 
   if (loading) {
     return (
@@ -162,17 +201,25 @@ export default function ProductsManagement() {
     );
   }
 
-  return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Products Management
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Manage your product catalog, pricing and inventory
-        </p>
-      </div>
+  // Wrap all rendering in try-catch
+  try {
+    console.log('Products rendering, data:', { 
+      productsCount: products.length, 
+      clientsCount: clients.length,
+      firstProduct: products[0] 
+    });
+    
+    return (
+      <div className="p-6">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Products Management
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Manage your product catalog, pricing and inventory
+          </p>
+        </div>
 
       {/* Actions Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -229,63 +276,80 @@ export default function ProductsManagement() {
                 </td>
               </TableRow>
             ) : (
-              filteredProducts.map((product) => (
-                <TableRow key={product._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <TableCell className="px-6 py-4">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                          <Package className="h-5 w-5 text-green-600 dark:text-green-300" />
+              filteredProducts.map((product) => {
+                // Ensure product has a string _id for the key
+                const productId = typeof product._id === 'string' ? product._id : String(product._id);
+                
+                // Safely format date
+                let formattedDate = 'N/A';
+                try {
+                  if (product.createdAt) {
+                    formattedDate = new Date(product.createdAt).toLocaleDateString();
+                  }
+                } catch (err) {
+                  console.error("Error formatting date:", product.createdAt);
+                }
+
+                return (
+                  <TableRow key={productId} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <TableCell className="px-6 py-4">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                            <Package className="h-5 w-5 text-green-600 dark:text-green-300" />
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {product.name || 'Unnamed Product'}
+                          </div>
                         </div>
                       </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {product.name}
-                        </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="text-sm text-gray-900 dark:text-white truncate max-w-xs">
+                        {product.description || 'No description'}
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-6 py-4">
-                    <div className="text-sm text-gray-900 dark:text-white truncate max-w-xs">
-                      {product.description || 'No description'}
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                    ${product.price?.toFixed(2) || '0.00'}
-                  </TableCell>
-                  <TableCell className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                    {product.clientid?.name || 'No client'}
-                  </TableCell>
-                  <TableCell className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                    {new Date(product.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleViewProduct(product)}
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                        title="View Product"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEditProduct(product)}
-                        className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
-                        title="Edit Product"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProduct(product)}
-                        className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                        title="Delete Product"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                      ${typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                      {product.clientid && typeof product.clientid === 'object' && product.clientid.name 
+                        ? product.clientid.name 
+                        : 'No client'}
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                      {formattedDate}
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleViewProduct(product)}
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                          title="View Product"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEditProduct(product)}
+                          className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                          title="Edit Product"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(product)}
+                          className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete Product"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -317,4 +381,24 @@ export default function ProductsManagement() {
       )}
     </div>
   );
+  } catch (err) {
+    console.error("Error rendering Products:", err);
+    return (
+      <div className="p-6 text-center">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <h2 className="text-lg font-bold mb-2">Error Rendering Products</h2>
+          <p>Something went wrong while displaying the products.</p>
+          <pre className="mt-2 text-sm bg-red-50 p-2 rounded overflow-auto max-h-64">
+            {err instanceof Error ? err.message : String(err)}
+          </pre>
+        </div>
+        <button 
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+          onClick={() => window.location.reload()}
+        >
+          Refresh Page
+        </button>
+      </div>
+    );
+  }
 }

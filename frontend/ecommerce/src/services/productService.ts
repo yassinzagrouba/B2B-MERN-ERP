@@ -118,10 +118,17 @@ export const productService = {
       
       // Extract clientId if available
       if (product.clientid) {
-        if (typeof product.clientid === 'string') {
-          clientId = product.clientid;
-        } else if (typeof product.clientid === 'object' && product.clientid._id) {
-          clientId = product.clientid._id;
+        try {
+          if (typeof product.clientid === 'string') {
+            clientId = product.clientid;
+          } else if (typeof product.clientid === 'object') {
+            // Check for both _id and id properties
+            const clientObj = product.clientid as any;
+            clientId = String(clientObj._id || clientObj.id || '');
+          }
+        } catch (error) {
+          console.error('Error extracting client ID:', error);
+          clientId = '';
         }
       }
       

@@ -42,6 +42,44 @@ const defaultCategory = 'General';
 export const enrichProduct = (product: Product): Product => {
   // Make a copy of the product to avoid mutation
   const enrichedProduct = { ...product };
+
+  // Ensure product has a string _id
+  if (!enrichedProduct._id || typeof enrichedProduct._id !== 'string') {
+    console.warn('Product missing valid ID:', enrichedProduct);
+    enrichedProduct._id = String(enrichedProduct._id || Math.random().toString(36).substring(2, 15));
+  }
+  
+  // Ensure clientid is properly formatted
+  if (enrichedProduct.clientid) {
+    try {
+      if (typeof enrichedProduct.clientid === 'object') {
+        // If it's an object, make sure it has the required fields
+        const clientObj = enrichedProduct.clientid as any;
+        
+        // Check if the client object has an id property instead of _id (common backend API variance)
+        const id = clientObj._id || clientObj.id || '';
+        
+        enrichedProduct.clientid = {
+          _id: String(id),
+          name: String(clientObj.name || 'Unknown Client'),
+          email: String(clientObj.email || ''),
+          company: String(clientObj.company || '')
+        };
+      } else {
+        // If it's a string or anything else, convert to a proper client object
+        enrichedProduct.clientid = {
+          _id: String(enrichedProduct.clientid),
+          name: 'Unknown Client',
+          email: '',
+          company: ''
+        };
+      }
+    } catch (error) {
+      // If there's any error processing the clientid, set it to null
+      console.error('Error processing client data:', error);
+      enrichedProduct.clientid = undefined;
+    }
+  }
   
   // Add image if missing
   if (!enrichedProduct.image) {
