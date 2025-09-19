@@ -2,7 +2,21 @@ import { useState, useRef, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import interactionPlugin from "@fullcalendar/interaction";
+              </div>
+            </div>
+            
+            {statusMessage && (
+              <div className="mt-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+                {statusMessage}
+              </div>
+            )}
+            
+            <div className="mt-8">
+              <div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                    Event Title
+                  </label>nteractionPlugin from "@fullcalendar/interaction";
 import { EventInput, DateSelectArg, EventClickArg } from "@fullcalendar/core";
 import { Modal } from "../components/ui/modal";
 import { useModal } from "../hooks/useModal";
@@ -15,7 +29,9 @@ interface CalendarEvent extends EventInput {
 }
 
 const Calendar: React.FC = () => {
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+    null
+  );
   const [eventTitle, setEventTitle] = useState("");
   const [eventStartDate, setEventStartDate] = useState("");
   const [eventEndDate, setEventEndDate] = useState("");
@@ -104,6 +120,7 @@ const Calendar: React.FC = () => {
   const handleAddOrUpdateEvent = () => {
     // Validate required fields
     if (!eventTitle || !eventStartDate || !eventLevel) {
+      // Set error message
       setStatusMessage("Please fill in all required fields");
       return;
     }
@@ -167,7 +184,7 @@ const Calendar: React.FC = () => {
         title="React.js Calendar Dashboard | TailAdmin - Next.js Admin Dashboard Template"
         description="This is React.js Calendar Dashboard page for TailAdmin - React.js Tailwind CSS Admin Dashboard Template"
       />
-      <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="rounded-2xl border  border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="custom-calendar">
           <FullCalendar
             ref={calendarRef}
@@ -206,13 +223,6 @@ const Calendar: React.FC = () => {
                 track
               </p>
             </div>
-            
-            {statusMessage && (
-              <div className="mt-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
-                {statusMessage}
-              </div>
-            )}
-            
             <div className="mt-8">
               <div>
                 <div>
