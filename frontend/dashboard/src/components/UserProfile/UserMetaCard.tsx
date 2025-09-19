@@ -9,6 +9,7 @@ import { usersAPI } from "../../services/api";
 import toast from "react-hot-toast";
 
 export default function UserMetaCard() {
+  // User meta card component for profile editing
   const { isOpen, openModal, closeModal } = useModal();
   const { user, updateUser } = useAuth();
   
