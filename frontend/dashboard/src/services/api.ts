@@ -105,8 +105,22 @@ export const clientsAPI = {
 export const productsAPI = {
   getAll: () => API.get('/products'),
   getById: (id: string) => API.get(`/products/${id}`),
-  create: (productData: any) => API.post('/products', productData),
-  update: (id: string, productData: any) => API.put(`/products/${id}`, productData),
+  create: (productData: any) => {
+    // If productData is FormData, set correct content type header
+    const headers = productData instanceof FormData 
+      ? { 'Content-Type': 'multipart/form-data' } 
+      : { 'Content-Type': 'application/json' };
+    
+    return API.post('/products', productData, { headers });
+  },
+  update: (id: string, productData: any) => {
+    // If productData is FormData, set correct content type header
+    const headers = productData instanceof FormData 
+      ? { 'Content-Type': 'multipart/form-data' } 
+      : { 'Content-Type': 'application/json' };
+    
+    return API.put(`/products/${id}`, productData, { headers });
+  },
   delete: (id: string) => API.delete(`/products/${id}`),
 };
 

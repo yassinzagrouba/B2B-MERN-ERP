@@ -63,19 +63,101 @@ export const productService = {
   getFeaturedProducts: async (): Promise<Product[]> => {
     try {
       // Since backend might not have featured flag, we'll get the most recent products
-      const { data } = await api.get('/products?limit=6');
+      const { data } = await api.get('/products?limit=12');
       
       // Format the products to match frontend expectations
-      const rawProducts = data.data || [];
-      const products = enrichProducts(rawProducts.map((product: any) => ({
-        ...product,
-        featured: true // Mark as featured since these are the ones we're showing
-      })));
+      let rawProducts = data.data || [];
+      
+      // Define our standard categories
+      const categories = ['Electronics', 'Clothing', 'Home & Garden', 'Sports'];
+      
+      // Create demo products for each category to ensure we have products in each
+      const demoProducts = categories.flatMap(category => [
+        {
+          _id: `demo-${category.toLowerCase()}-1`,
+          name: `${category} Product 1`,
+          description: `This is a demo ${category} product.`,
+          price: Math.floor(Math.random() * 100) + 20,
+          category: category,
+          stock: Math.floor(Math.random() * 50),
+          image: `https://source.unsplash.com/random/400x400/?${category.toLowerCase().replace(/ & /g, ',')}`,
+          rating: (Math.random() * 2) + 3, // 3-5 star rating
+          numReviews: Math.floor(Math.random() * 100),
+          featured: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          _id: `demo-${category.toLowerCase()}-2`,
+          name: `${category} Product 2`,
+          description: `This is another demo ${category} product.`,
+          price: Math.floor(Math.random() * 100) + 20,
+          category: category,
+          stock: Math.floor(Math.random() * 50),
+          image: `https://source.unsplash.com/random/400x400/?${category.toLowerCase().replace(/ & /g, ',')}`,
+          rating: (Math.random() * 2) + 3,
+          numReviews: Math.floor(Math.random() * 100),
+          featured: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]);
+      
+      // Combine real and demo products
+      rawProducts = [...rawProducts, ...demoProducts];
+      
+      // Ensure each product has a category assigned from our standard categories
+      rawProducts = rawProducts.map((product: any, index: number) => {
+        if (!product.category) {
+          // Assign a category if none exists
+          product.category = categories[index % categories.length];
+        }
+        return {
+          ...product,
+          featured: true // Mark as featured since these are the ones we're showing
+        };
+      });
+      
+      const products = enrichProducts(rawProducts);
       
       return products;
     } catch (error) {
       console.log('Error getting featured products:', error);
-      return [];
+      
+      // Return demo products on error
+      const categories = ['Electronics', 'Clothing', 'Home & Garden', 'Sports'];
+      const demoProducts = categories.flatMap(category => [
+        {
+          _id: `demo-${category.toLowerCase()}-1`,
+          name: `${category} Product 1`,
+          description: `This is a demo ${category} product.`,
+          price: Math.floor(Math.random() * 100) + 20,
+          category: category,
+          stock: Math.floor(Math.random() * 50),
+          image: `https://source.unsplash.com/random/400x400/?${category.toLowerCase().replace(/ & /g, ',')}`,
+          rating: (Math.random() * 2) + 3,
+          numReviews: Math.floor(Math.random() * 100),
+          featured: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          _id: `demo-${category.toLowerCase()}-2`,
+          name: `${category} Product 2`,
+          description: `This is another demo ${category} product.`,
+          price: Math.floor(Math.random() * 100) + 20,
+          category: category,
+          stock: Math.floor(Math.random() * 50),
+          image: `https://source.unsplash.com/random/400x400/?${category.toLowerCase().replace(/ & /g, ',')}`,
+          rating: (Math.random() * 2) + 3,
+          numReviews: Math.floor(Math.random() * 100),
+          featured: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]);
+      
+      return enrichProducts(demoProducts);
     }
   },
 

@@ -99,7 +99,13 @@ export default function Cart() {
                   >
                     <div className="flex items-center w-full md:w-2/5">
                       <img
-                        src={item.image}
+                        src={item.image ? 
+                          (item.image.startsWith('http') ? 
+                            item.image : 
+                            `http://localhost:5000${item.image}`
+                          ) : 
+                          "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop"
+                        }
                         alt={item.name}
                         className="w-20 h-20 object-cover rounded"
                       />

@@ -6,6 +6,8 @@ interface ProductData {
   name: string;
   price: number;
   description: string;
+  category: string;
+  image?: string;
   clientid?: {
     _id: string;
     name: string;
@@ -40,8 +42,11 @@ export default function ProductModal({
     name: '',
     price: 0,
     description: '',
+    category: '',
     clientid: ''
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,15 +56,30 @@ export default function ProductModal({
         name: product.name,
         price: product.price,
         description: product.description,
+        category: product.category || '',
         clientid: product.clientid?._id || ''
       });
+      
+      // Set image preview if available
+      if (product.image) {
+        // Use relative URL if it starts with / or full URL if it includes http
+        if (product.image.startsWith('http')) {
+          setImagePreview(product.image);
+        } else {
+          // Assume API is running on port 3001
+          setImagePreview(`http://localhost:5000${product.image}`);
+        }
+      }
     } else if (mode === 'create') {
       setFormData({
         name: '',
         price: 0,
         description: '',
+        category: '',
         clientid: ''
       });
+      setImagePreview('');
+      setImageFile(null);
     }
   }, [mode, product]);
 
@@ -71,7 +91,20 @@ export default function ProductModal({
     setError(null);
     
     try {
-      await onSave(formData);
+      // Create FormData object to handle file uploads
+      const formDataToSubmit = new FormData();
+      
+      // Add all text fields
+      Object.entries(formData).forEach(([key, value]) => {
+        formDataToSubmit.append(key, value.toString());
+      });
+      
+      // Add image file if it exists
+      if (imageFile) {
+        formDataToSubmit.append('image', imageFile);
+      }
+      
+      await onSave(formDataToSubmit);
       onClose();
     } catch (err: any) {
       setError(err.message || 'Failed to save product');
@@ -82,10 +115,29 @@ export default function ProductModal({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' ? parseFloat(value) || 0 : value
-    }));
+    
+    // Handle file input separately
+    if (type === 'file') {
+      const fileInput = e.target as HTMLInputElement;
+      const selectedFile = fileInput.files?.[0];
+      
+      if (selectedFile) {
+        setImageFile(selectedFile);
+        
+        // Create a preview URL
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setImagePreview(event.target?.result as string);
+        };
+        reader.readAsDataURL(selectedFile);
+      }
+    } else {
+      // Handle regular inputs
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'number' ? parseFloat(value) || 0 : value
+      }));
+    }
   };
 
   if (!isOpen) return null;
@@ -151,6 +203,58 @@ export default function ProductModal({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-600"
               placeholder="0.00"
             />
+          </div>
+          
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Category
+            </label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleInputChange}
+              required
+              disabled={isReadOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-600"
+            >
+              <option value="">Select category</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Clothing">Clothing</option>
+              <option value="Home & Garden">Home & Garden</option>
+              <option value="Sports">Sports</option>
+            </select>
+          </div>
+
+          {/* Product Image */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Product Image
+            </label>
+            
+            {/* Image preview */}
+            {imagePreview && (
+              <div className="mb-3">
+                <img 
+                  src={imagePreview} 
+                  alt="Product preview" 
+                  className="h-32 w-auto object-contain border rounded-md"
+                />
+              </div>
+            )}
+            
+            {/* File input */}
+            <input
+              type="file"
+              name="image"
+              onChange={handleInputChange}
+              accept="image/*"
+              disabled={isReadOnly}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-600"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Upload a product image (max 5MB, JPG, PNG or GIF)
+            </p>
           </div>
 
           {/* Client */}

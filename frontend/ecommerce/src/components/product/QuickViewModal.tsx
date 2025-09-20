@@ -23,7 +23,11 @@ const QuickViewModal = ({ product, isOpen, onClose }: QuickViewModalProps) => {
   const stockLevel = typeof product.stock === 'number' ? product.stock : 0;
   const productName = product.name || 'Unnamed Product';
   const productPrice = typeof product.price === 'number' ? product.price : 0;
-  const productImage = product.image || '';
+  const productImage = product.image 
+    ? (product.image.startsWith('http') 
+        ? product.image 
+        : `http://localhost:5000${product.image}`) 
+    : '';
   const productDescription = product.description || 'No description available';
   const productRating = typeof product.rating === 'number' ? product.rating : 0;
   const productReviews = typeof product.numReviews === 'number' ? product.numReviews : 0;

@@ -30,7 +30,18 @@ const cartSlice = createSlice({
   reducers: {
     // Add item to cart
     addToCart: (state, action: PayloadAction<CartItem>) => {
-      const item = action.payload;
+      const item = {
+        ...action.payload,
+        // Ensure image path is properly handled
+        image: action.payload.image ? 
+          (action.payload.image.startsWith('http') ? 
+            action.payload.image : 
+            // Store the full path for backend-served images
+            action.payload.image
+          ) : 
+          "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop"
+      };
+      
       const existItem = state.items.find((x) => x._id === item._id);
 
       if (existItem) {

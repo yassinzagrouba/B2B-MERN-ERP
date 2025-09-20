@@ -99,14 +99,14 @@ const getProductById = async (req, res) => {
 // Créer un nouveau produit
 const createProduct = async (req, res) => {
   try {
-    const { name, description, price, clientid } = req.body;
+    const { name, description, price, clientid, category } = req.body;
 
     // Vérifier si les données sont présentes
-    if (!name || !description || !price || !clientid) {
+    if (!name || !description || !price || !clientid || !category) {
       return res.status(400).json({
         success: false,
         message: 'Tous les champs sont requis',
-        received: { name, description, price, clientid }
+        received: { name, description, price, clientid, category }
       });
     }
 
@@ -119,10 +119,20 @@ const createProduct = async (req, res) => {
       });
     }
 
+    // Handle image upload
+    let imagePath = '/images/default-product.jpg'; // Default image
+    
+    if (req.file) {
+      // If file is uploaded, use its path
+      imagePath = `/uploads/${req.file.filename}`;
+    }
+
     const newProduct = new Product({
       name,
       description,
       price,
+      category,
+      image: imagePath,
       clientid
     });
 
@@ -162,7 +172,7 @@ const createProduct = async (req, res) => {
 // Mettre à jour un produit
 const updateProduct = async (req, res) => {
   try {
-    const { name, description, price, clientid } = req.body;
+    const { name, description, price, clientid, category } = req.body;
 
     // Si le client change, vérifier qu'il existe
     if (clientid) {
@@ -174,10 +184,27 @@ const updateProduct = async (req, res) => {
         });
       }
     }
+    
+    // Create update object
+    const updateData = { name, description, price, clientid, category };
+    
+    // Handle image update if a new file is uploaded
+    if (req.file) {
+      updateData.image = `/uploads/${req.file.filename}`;
+      
+      // If there's an existing image, we could delete it here (optional)
+      // const product = await Product.findById(req.params.id);
+      // if (product.image && product.image !== '/images/default-product.jpg') {
+      //   const oldImagePath = path.join(__dirname, '..', product.image);
+      //   if (fs.existsSync(oldImagePath)) {
+      //     fs.unlinkSync(oldImagePath);
+      //   }
+      // }
+    }
 
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      { name, description, price, clientid },
+      updateData,
       { new: true, runValidators: true }
     )
     .populate('clientid', 'name email company')

@@ -8,17 +8,22 @@ interface FeaturedProductsProps {
   title?: string;
   subtitle?: string;
   maxItems?: number;
+  category?: string | null;
 }
 
 const FeaturedProducts = ({
   title = 'Featured Products',
   subtitle = 'Check out our top picks for you',
-  maxItems = 4
+  maxItems = 4,
+  category = null
 }: FeaturedProductsProps) => {
   const dispatch = useAppDispatch();
   const { featuredProducts, loading, error } = useAppSelector(
     (state) => state.products
   );
+  
+  // Get unique categories from products
+  const categories = [...new Set(featuredProducts.map(product => product.category))].filter(Boolean);
 
   useEffect(() => {
     dispatch(fetchFeaturedProducts());
@@ -42,20 +47,48 @@ const FeaturedProducts = ({
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredProducts.slice(0, maxItems).map((product) => (
-                <ProductCard key={product._id} product={product} />
-              ))}
-            </div>
-
-            <div className="mt-12 text-center">
-              <Link
-                to="/products"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-8 rounded-md inline-block font-medium"
-              >
-                View All Products
-              </Link>
-            </div>
+            {featuredProducts
+              .filter(product => 
+                !category || 
+                product.category?.toLowerCase() === category.toLowerCase() || 
+                product.name?.toLowerCase().includes(category.toLowerCase())
+              ).length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {featuredProducts
+                  .filter(product => 
+                    !category || 
+                    product.category?.toLowerCase() === category.toLowerCase() || 
+                    product.name?.toLowerCase().includes(category.toLowerCase())
+                  )
+                  .slice(0, maxItems)
+                  .map((product) => (
+                    <ProductCard key={product._id} product={product} />
+                  ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-gray-50 rounded-lg">
+                <p className="text-gray-500">No products found in this category. Try selecting another category.</p>
+              </div>
+            )}
+            
+            {/* Show product count by category */}
+            {!category && categories.length > 0 && (
+              <div className="mt-10 bg-gray-50 p-6 rounded-lg">
+                <h3 className="text-xl font-semibold text-gray-800 mb-4">Products by Category</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {categories.map(cat => {
+                    if (!cat) return null;
+                    const count = featuredProducts.filter(p => p.category === cat).length;
+                    return (
+                      <div key={cat} className="bg-white p-4 rounded shadow-sm">
+                        <h4 className="font-medium text-indigo-600">{cat}</h4>
+                        <p className="text-gray-700">{count} products</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

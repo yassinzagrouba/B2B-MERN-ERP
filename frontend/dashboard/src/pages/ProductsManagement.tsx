@@ -17,6 +17,8 @@ interface ProductData {
   name: string;
   price: number;
   description: string;
+  category: string;
+  image?: string;
   clientid?: {
     _id: string;
     name: string;
@@ -95,6 +97,8 @@ export default function ProductsManagement() {
             name: product.name || '',
             price: product.price || 0,
             description: product.description || '',
+            category: product.category || '',
+            image: product.image || '/images/default-product.jpg',
             clientid: product.clientid ? {
               _id: product.clientid._id || product.clientid,
               name: product.clientid.name || 'Unknown Client'
@@ -174,6 +178,7 @@ export default function ProductsManagement() {
         // Check if these properties exist before calling toLowerCase()
         (product.name?.toLowerCase() || "").includes(searchTermLower) ||
         (product.description?.toLowerCase() || "").includes(searchTermLower) ||
+        (product.category?.toLowerCase() || "").includes(searchTermLower) ||
         (product.clientid?.name?.toLowerCase() || "").includes(searchTermLower)
       );
     } catch (err) {
@@ -257,6 +262,9 @@ export default function ProductsManagement() {
                 Price
               </TableCell>
               <TableCell isHeader className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Category
+              </TableCell>
+              <TableCell isHeader className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Client
               </TableCell>
               <TableCell isHeader className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -271,7 +279,7 @@ export default function ProductsManagement() {
           <TableBody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {filteredProducts.length === 0 ? (
               <TableRow>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                   {searchTerm ? 'No products found matching your search.' : 'No products found.'}
                 </td>
               </TableRow>
@@ -295,9 +303,32 @@ export default function ProductsManagement() {
                     <TableCell className="px-6 py-4">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                            <Package className="h-5 w-5 text-green-600 dark:text-green-300" />
-                          </div>
+                          {product.image ? (
+                            <img 
+                              src={product.image.startsWith('http') ? product.image : `http://localhost:5000${product.image}`}
+                              alt={product.name}
+                              className="h-10 w-10 rounded-lg object-cover"
+                              onError={(e) => {
+                                // Fallback to icon if image fails to load
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  const fallbackDiv = document.createElement('div');
+                                  fallbackDiv.className = "h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center";
+                                  const icon = document.createElement('span');
+                                  icon.className = "h-5 w-5 text-green-600 dark:text-green-300";
+                                  icon.innerHTML = '📦';
+                                  fallbackDiv.appendChild(icon);
+                                  parent.appendChild(fallbackDiv);
+                                }
+                              }}
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                              <Package className="h-5 w-5 text-green-600 dark:text-green-300" />
+                            </div>
+                          )}
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -313,6 +344,9 @@ export default function ProductsManagement() {
                     </TableCell>
                     <TableCell className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                       ${typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                      {product.category || 'Uncategorized'}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                       {product.clientid && typeof product.clientid === 'object' && product.clientid.name 

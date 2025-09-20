@@ -22,14 +22,14 @@ const Hero = () => {
           Fast shipping, easy returns, and exceptional customer service.
         </p>
         <div className="mt-10 flex flex-wrap gap-4">
-          <Link to="/products">
+          <Link to="/">
             <Button variant="primary" className="text-base px-8 py-3">
-              Shop Now
+              Explore
             </Button>
           </Link>
-          <Link to="/products">
+          <Link to="/">
             <Button variant="outline" className="text-base px-8 py-3 bg-transparent text-white border-white hover:bg-white hover:text-gray-900">
-              New Arrivals
+              Learn More
             </Button>
           </Link>
         </div>

@@ -45,6 +45,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const isFeatured = !!product.featured;
   const productName = product.name || 'Unnamed Product';
   const productPrice = typeof product.price === 'number' ? product.price : 0;
+  const productCategory = product.category || 'Uncategorized';
   
   const openQuickView = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -56,10 +57,18 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <>
       <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:shadow-lg">
-        <Link to={`/products/${product._id}`}>
         <div className="h-48 overflow-hidden relative group">
           <img
-            src={imageError ? FALLBACK_IMAGE : (product.image || FALLBACK_IMAGE)}
+            src={imageError ? 
+              FALLBACK_IMAGE : 
+              (product.image ? 
+                (product.image.startsWith('http') ? 
+                  product.image : 
+                  `http://localhost:5000${product.image}`
+                ) : 
+                FALLBACK_IMAGE
+              )
+            }
             alt={productName}
             className="w-full h-full object-cover"
             onError={() => setImageError(true)}
@@ -78,6 +87,11 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <Badge variant="info">Featured</Badge>
               </div>
             )}
+            {productCategory && (
+              <div className="mt-1">
+                <Badge variant="success">{productCategory}</Badge>
+              </div>
+            )}
           </div>
           
           {/* Quick View Button - only shows on hover */}
@@ -90,17 +104,17 @@ export default function ProductCard({ product }: ProductCardProps) {
             </button>
           </div>
         </div>
-      </Link>
       
       <div className="p-4">
-        <Link to={`/products/${product._id}`}>
-          <h3 className="text-lg font-medium text-gray-800 mb-2 hover:text-indigo-600 truncate">
-            {productName}
-          </h3>
-        </Link>
+        <h3 className="text-lg font-medium text-gray-800 mb-2 truncate">
+          {productName}
+        </h3>
         
         <div className="flex justify-between items-center mb-3">
-          <p className="text-gray-700 font-bold">${productPrice.toFixed(2)}</p>
+          <div>
+            <p className="text-gray-700 font-bold">${productPrice.toFixed(2)}</p>
+            <p className="text-xs text-gray-500">{productCategory}</p>
+          </div>
           {stockLevel > 0 && (
             <button
               onClick={handleAddToCart}

@@ -81,8 +81,30 @@ export const enrichProduct = (product: Product): Product => {
     }
   }
   
+  // Process image paths
+  if (enrichedProduct.image) {
+    // If it's a backend path, keep it as is
+    if (enrichedProduct.image.startsWith('/uploads/') || enrichedProduct.image.startsWith('/images/')) {
+      // Image path will be processed in the component
+    }
+    // If it's an external URL, keep it as is
+    else if (enrichedProduct.image.startsWith('http')) {
+      // No changes needed
+    }
+    // If it's something else, use a fallback
+    else {
+      const category = enrichedProduct.category || defaultCategory;
+      const images = categoryImages[category] || categoryImages[defaultCategory];
+      const hashCode = enrichedProduct._id.split('').reduce((a, b) => {
+        a = ((a << 5) - a) + b.charCodeAt(0);
+        return a & a;
+      }, 0);
+      const imageIndex = Math.abs(hashCode) % images.length;
+      enrichedProduct.image = `${images[imageIndex]}?w=400&h=400&fit=crop`;
+    }
+  }
   // Add image if missing
-  if (!enrichedProduct.image) {
+  else {
     const category = enrichedProduct.category || defaultCategory;
     const images = categoryImages[category] || categoryImages[defaultCategory];
     // Create a consistent image selection based on product ID to keep it consistent

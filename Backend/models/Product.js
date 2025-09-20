@@ -22,6 +22,20 @@ const productSchema = new mongoose.Schema({
     min: [0, 'Le prix ne peut pas être négatif']
   },
 
+  category: {
+    type: String,
+    required: [true, 'La catégorie est requise'],
+    enum: {
+      values: ['Electronics', 'Clothing', 'Home & Garden', 'Sports'],
+      message: 'La catégorie doit être Electronics, Clothing, Home & Garden, ou Sports'
+    }
+  },
+
+  image: {
+    type: String,
+    default: '/images/default-product.jpg'
+  },
+
   clientid: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Client',

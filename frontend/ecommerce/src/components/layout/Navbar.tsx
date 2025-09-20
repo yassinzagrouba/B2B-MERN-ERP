@@ -48,7 +48,6 @@ export default function Navbar() {
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
               <Link to="/" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md font-medium">Home</Link>
-              <Link to="/products" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md font-medium">Products</Link>
               <Link to="/cart" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md font-medium relative">
                 Cart
                 {cartItemsCount > 0 && (
@@ -141,7 +140,6 @@ export default function Navbar() {
       <div className={`${mobileMenuOpen ? 'block' : 'hidden'} md:hidden`}>
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           <Link to="/" className="block text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-base font-medium">Home</Link>
-          <Link to="/products" className="block text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-base font-medium">Products</Link>
           <Link to="/cart" className="block text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-base font-medium">
             Cart ({cartItemsCount})
           </Link>

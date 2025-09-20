@@ -1,10 +1,23 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { Layout } from '../components/layout';
 import { Button } from '../components/ui';
 import { FeaturedProducts, RecentlyViewed, PersonalizedRecommendations } from '../components/product';
 import { Hero, TestimonialsSection, Newsletter } from '../components/home';
 
 export default function HomePage() {
+  // State to track the selected category
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  
+  // Handle category selection
+  const handleCategorySelect = (category: string) => {
+    // If already selected, deselect it
+    if (selectedCategory === category) {
+      setSelectedCategory(null);
+    } else {
+      setSelectedCategory(category);
+    }
+  };
+  
   return (
     <Layout>
       {/* Hero Section */}
@@ -12,63 +25,60 @@ export default function HomePage() {
 
       {/* Featured Products Section */}
       <FeaturedProducts 
-        title="Featured Products" 
-        subtitle="Check out our top picks for you" 
+        title={selectedCategory ? `${selectedCategory} Products` : "Featured Products"} 
+        subtitle={selectedCategory ? `Browse our ${selectedCategory.toLowerCase()} collection` : "Check out our top picks for you"} 
         maxItems={8} 
+        category={selectedCategory}
       />
 
       {/* Categories Section */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Shop by Category</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Categories</h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Browse our curated collections organized by category
+              {selectedCategory 
+                ? `Currently browsing: ${selectedCategory}` 
+                : 'Browse our curated collections'}
             </p>
+            {selectedCategory && (
+              <button
+                onClick={() => setSelectedCategory(null)}
+                className="mt-4 text-indigo-600 hover:text-indigo-800 underline font-medium"
+              >
+                Clear filter
+              </button>
+            )}
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {['Electronics', 'Clothing', 'Home & Garden', 'Sports'].map(
               (category) => (
-                <Link
+                <div
                   key={category}
-                  to={`/products?category=${category.toLowerCase()}`}
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow group"
+                  className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer ${
+                    selectedCategory === category ? 'ring-2 ring-indigo-600' : ''
+                  }`}
+                  onClick={() => handleCategorySelect(category)}
                 >
                   <div className="h-40 bg-gray-100 overflow-hidden">
                     <img
                       src={`/assets/categories/${category.toLowerCase()}.png`}
                       alt={category}
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover object-center"
                     />
                   </div>
                   <div className="p-4 text-center">
-                    <h3 className="font-medium text-lg text-gray-900 group-hover:text-indigo-600 transition-colors">
+                    <h3 className={`font-medium text-lg ${
+                      selectedCategory === category ? 'text-indigo-600' : 'text-gray-900'
+                    }`}>
                       {category}
                     </h3>
-                    <Button 
-                      variant="link" 
-                      className="mt-2 text-sm inline-flex items-center"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      Shop Now
-                      <svg 
-                        className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24" 
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M9 5l7 7-7 7" 
-                        />
-                      </svg>
-                    </Button>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {selectedCategory === category ? 'Selected' : 'Click to filter'}
+                    </p>
                   </div>
-                </Link>
+                </div>
               )
             )}
           </div>

@@ -12,6 +12,7 @@ const {
   getProductStats
 } = require('../controllers/productController');
 const { verifyToken, isAdmin } = require('../middlewares/authMiddleware');
+const upload = require('../middlewares/uploadMiddleware');
 
 // Routes publiques (nécessitent une authentification mais pas de rôle spécifique)
 router.get('/', verifyToken, getAllProducts);
@@ -22,8 +23,8 @@ router.get('/:id', verifyToken, getProductById);
 router.get('/client/:clientId', verifyToken, getProductsByClient);
 
 // Routes pour les utilisateurs avec permissions (admin ou user autorisé)
-router.post('/', verifyToken, createProduct);
-router.put('/:id', verifyToken, updateProduct);
+router.post('/', verifyToken, upload.single('image'), createProduct);
+router.put('/:id', verifyToken, upload.single('image'), updateProduct);
 
 // Routes réservées aux administrateurs
 router.delete('/:id', verifyToken, isAdmin, deleteProduct);

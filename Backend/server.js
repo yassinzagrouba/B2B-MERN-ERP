@@ -16,6 +16,9 @@ app.use(cors({
   origin: true
 }));
 
+// Serve static files from the uploads directory
+app.use('/uploads', express.static('uploads'));
+
 // Connexion MongoDB
 mongoose.connect(process.env.ATLAS_URI, {
   useNewUrlParser: true,
