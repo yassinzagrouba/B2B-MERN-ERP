@@ -1,0 +1,139 @@
+// config/nodemailer.js
+const nodemailer = require('nodemailer');
+require('dotenv').config();
+
+/**
+ * Creates and returns appropriate email transporter based on environment
+ * @returns {Promise<nodemailer.Transporter>} Configured Nodemailer transporter
+ */
+async function createTransporter() {
+  // Force using Gmail if USE_REAL_EMAIL is set to true or for password reset
+  if ((process.env.USE_REAL_EMAIL === 'true' || process.env.FORCE_GMAIL === 'true') && 
+      process.env.EMAIL_USERNAME && process.env.EMAIL_PASSWORD) {
+    
+    console.log('Using Gmail for email delivery:', process.env.EMAIL_USERNAME);
+    
+    // Create Gmail transporter with enhanced security
+    return nodemailer.createTransport({
+      service: process.env.EMAIL_SERVICE || 'gmail',
+      auth: {
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+      secure: true,
+      debug: true, // Enable debug logs for troubleshooting
+      logger: true, // Enable SMTP transaction logging
+    });
+  }
+  
+  // Use Gmail if credentials are available (normal mode)
+  else if (process.env.EMAIL_USERNAME && process.env.EMAIL_PASSWORD) {
+    console.log('Using Gmail email service with account:', process.env.EMAIL_USERNAME);
+    
+    // Create Gmail transporter
+    return nodemailer.createTransport({
+      service: process.env.EMAIL_SERVICE || 'gmail',
+      auth: {
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+      debug: true // Enable debug logs for troubleshooting
+    });
+  }
+  
+  // Fall back to Ethereal only if Gmail credentials are missing
+  console.warn('Email credentials not found in environment variables.');
+  console.warn('Set EMAIL_USERNAME and EMAIL_PASSWORD in your .env file');
+  console.warn('Falling back to Ethereal test account for development...');
+  
+  try {
+    // Create test account for development
+    const testAccount = await nodemailer.createTestAccount();
+    console.log('Created Ethereal test account for email testing');
+    
+    // Return Ethereal test transporter
+    return nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+    });
+  } catch (error) {
+    console.error('Failed to create test email account:', error);
+    throw new Error('Could not configure email transport. Check your email settings.');
+  }
+}
+
+/**
+ * Sends an email
+ * @param {Object} options - Email options including to, subject, text, html
+ * @returns {Promise<Object>} Mail delivery info
+ */
+async function sendEmail(options) {
+  try {
+    const transporter = await createTransporter();
+    const from = process.env.EMAIL_FROM || '"B2B ERP System" <noreply@b2berp.com>';
+    
+    console.log('Attempting to send email to:', options.to);
+    console.log('Using email configuration:', {
+      service: process.env.EMAIL_SERVICE || 'gmail',
+      user: process.env.EMAIL_USERNAME,
+      // Not logging password for security
+      from: from
+    });
+    
+    const info = await transporter.sendMail({
+      from,
+      ...options
+    });
+    
+    // Check if using Ethereal (for dev environment logging)
+    if (info.messageId && info.messageId.includes('ethereal')) {
+      console.log(`Email Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
+      return {
+        success: true,
+        info,
+        previewUrl: nodemailer.getTestMessageUrl(info)
+      };
+    } else {
+      // Real email sent via Gmail
+      console.log(`Email sent successfully to: ${options.to}`);
+      console.log(`Message ID: ${info.messageId}`);
+      return {
+        success: true,
+        info
+      };
+    }
+  } catch (error) {
+    console.error('Failed to send email. Detailed error:', error);
+    
+    if (error.code === 'EAUTH') {
+      console.error('\n🔑 GMAIL AUTHENTICATION FAILED');
+      console.error('For Gmail accounts, you MUST use an App Password, not your regular password.');
+      console.error('Please follow these steps:');
+      console.error('1. Enable 2-Step Verification: https://myaccount.google.com/security');
+      console.error('2. Generate App Password: https://myaccount.google.com/apppasswords');
+      console.error('3. Update your .env file with the new App Password');
+      console.error('4. Restart the server');
+      console.error('\nSee EMAIL_SETUP_GUIDE.md for detailed instructions');
+    } else if (error.code === 'ESOCKET') {
+      console.error('Socket error - check your email service settings and network connection');
+    }
+    
+    return {
+      success: false,
+      error: {
+        message: error.message,
+        code: error.code,
+        command: error.command
+      }
+    };
+  }
+}
+
+module.exports = {
+  sendEmail
+};
