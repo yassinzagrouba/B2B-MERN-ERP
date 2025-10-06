@@ -4,9 +4,19 @@ import { useAppDispatch } from './redux/hooks';
 import Home from './pages/Home';
 import Cart from './pages/Cart';
 import Login from './pages/Login';
+import SimpleLogin from './pages/SimpleLogin';
+import BasicLogin from './pages/BasicLogin';
+import ResetPassword from './pages/ResetPassword';
 import Signup from './pages/Signup';
 import Checkout from './pages/Checkout';
+import CheckoutSuccess from './pages/CheckoutSuccess';
+import CheckoutCancel from './pages/CheckoutCancel';
 import NotFound from './pages/NotFound';
+import SearchResults from './pages/SearchResults';
+import ProductDetails from './pages/ProductDetails';
+import TestProduct from './pages/TestProduct';
+import UserOrders from './pages/UserOrders';
+import AccountOrders from './pages/AccountOrders';
 import PrivateRoute from './components/routing/PrivateRoute';
 import { setUser } from './redux/userSlice';
 import { authService } from './services/authService';
@@ -29,13 +39,46 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/cart" element={<Cart />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<BasicLogin />} />
+        <Route path="/basic-login" element={<BasicLogin />} />
+        <Route path="/simple-login" element={<SimpleLogin />} />
+        <Route path="/original-login" element={<Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/search" element={<SearchResults />} />
+        <Route path="/products" element={<SearchResults />} />
+        <Route path="/products/:id" element={<ProductDetails />} />
+        <Route path="/test-product" element={<TestProduct />} />
         <Route 
           path="/checkout" 
           element={
             <PrivateRoute>
               <Checkout />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/checkout/success" 
+          element={
+            <PrivateRoute>
+              <CheckoutSuccess />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/checkout/cancel" 
+          element={
+            <PrivateRoute>
+              <CheckoutCancel />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/account/orders" 
+          element={
+            <PrivateRoute>
+              <AccountOrders />
             </PrivateRoute>
           } 
         />
